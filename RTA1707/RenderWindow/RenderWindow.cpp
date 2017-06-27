@@ -5,27 +5,25 @@
 
 #define MAX_LOADSTRING 100
 
-// Global Variables:
 HINSTANCE g_hInst;
 WCHAR szTitle[ MAX_LOADSTRING ];
 WCHAR szWindowClass[ MAX_LOADSTRING ];
 HWND g_hWnd;
 GraphicsSystem g_graphicsSystem;
+extern const int g_windowWidth = 1000;
+extern const int g_windowHeight = 500;
 
-// Forward declarations of functions included in this code module:
-ATOM                MyRegisterClass( HINSTANCE );
-BOOL                InitInstance( HINSTANCE, int );
-LRESULT CALLBACK    WndProc( HWND, UINT, WPARAM, LPARAM );
-INT_PTR CALLBACK    About( HWND, UINT, WPARAM, LPARAM );
+ATOM MyRegisterClass( HINSTANCE );
+BOOL InitInstance( HINSTANCE, int );
+LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
+INT_PTR CALLBACK About( HWND, UINT, WPARAM, LPARAM );
 
 int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 					   _In_ LPWSTR lpCmdLine, _In_ int nCmdShow )
 {
 	UNREFERENCED_PARAMETER( hPrevInstance );
 	UNREFERENCED_PARAMETER( lpCmdLine );
-	// TODO: Place code here.
 
-	// Initialize global strings
 	LoadStringW( hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING );
 	LoadStringW( hInstance, IDC_RENDERWINDOW, szWindowClass, MAX_LOADSTRING );
 	MyRegisterClass( hInstance );
@@ -48,9 +46,9 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	ZEROSTRUCT( msg_ );
 
 	g_graphicsSystem.InitializeGraphicsSystem();
-
 	while ( WM_QUIT != msg_.message )
 	{
+		g_graphicsSystem.DrawFrame();
 		if ( PeekMessage( &msg_, nullptr, 0, 0, PM_REMOVE ) )
 		{
 			if ( !TranslateAccelerator( msg_.hwnd, hAccelTable, &msg_ ) )
@@ -60,6 +58,7 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 			}
 		}
 	}
+	g_graphicsSystem.ReleaseAll();
 
 #ifndef NDEBUG
 	FreeConsole();
@@ -67,13 +66,6 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	return ( int )msg_.wParam;
 }
 
-
-
-//
-//  FUNCTION: MyRegisterClass()
-//
-//  PURPOSE: Registers the window class.
-//
 ATOM MyRegisterClass( HINSTANCE hInstance )
 {
 	WNDCLASSEXW wcex;
@@ -95,22 +87,12 @@ ATOM MyRegisterClass( HINSTANCE hInstance )
 	return RegisterClassExW( &wcex );
 }
 
-//
-//   FUNCTION: InitInstance(HINSTANCE, int)
-//
-//   PURPOSE: Saves instance handle and creates main window
-//
-//   COMMENTS:
-//
-//        In this function, we save the instance handle in a global variable and
-//        create and display the main program window.
-//
 BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
 {
-	g_hInst = hInstance; // Store instance handle in our global variable
+	g_hInst = hInstance;
 
 	g_hWnd = CreateWindowW( szWindowClass, szTitle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX,
-							CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr );
+							CW_USEDEFAULT, 0, g_windowWidth, g_windowHeight, nullptr, nullptr, hInstance, nullptr );
 
 	if ( !g_hWnd )
 	{
@@ -123,16 +105,6 @@ BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
 	return TRUE;
 }
 
-//
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE:  Processes messages for the main window.
-//
-//  WM_COMMAND  - process the application menu
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
-//
-//
 LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
 	switch ( message )

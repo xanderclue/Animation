@@ -52,15 +52,18 @@ struct PipelineState
 class GraphicsSystem
 {
 private:
-	struct DebugRenderer
-	{
-		unsigned int m_numVertices;
-		unsigned int m_arraySize;
-		PositionColorVertex* m_vertexArray;
-		DebugRenderer( void );
-		~DebugRenderer( void );
-	} m_debugRenderer;
+	unsigned int m_DEBUG_LINES_numVertices;
+	unsigned int m_DEBUG_LINES_arraySize;
+	PositionColorVertex* m_DEBUG_LINES_vertexArray;
 	PipelineState m_defaultPipeline;
+
+	ID3D11Device* m_device = nullptr;
+	ID3D11DeviceContext* m_deviceContext = nullptr;
+	IDXGISwapChain* m_swapChain = nullptr;
+	ID3D11Buffer* m_defaultVertexBuffer = nullptr;
+	D3D11_VIEWPORT m_viewport;
+	UINT m_vertexCount = 0u;
+
 public:
 	GraphicsSystem( void );
 	~GraphicsSystem( void );
@@ -68,13 +71,14 @@ public:
 	void SetPipelineStages( PipelineState* );
 	void SetupDefaultBuffer( void );
 	void InitializeGraphicsSystem( void );
-	void CreateDeviceContextSwapChain( void );
+	void InitializeDeviceContextChain( void );
 	void InitializeDepthStencilBuffer( void );
 	void InitializeDepthStencilState( void );
 	void InitializeDepthStencilView( void );
 	void InitializeRasterizerState( void );
 	void InitializeShadersAndInputLayout( void );
 	void DrawFrame( void );
-	void AddDebugLine( void );
-	void FlushDebugRenderer( void );
+	void AddDebugLine( const PositionColorVertex&, const PositionColorVertex& );
+	void DrawDebugGraphics( void );
+	void ReleaseAll( void );
 };
