@@ -1,28 +1,25 @@
-// RenderWindow.cpp : Defines the entry point for the application.
-//
-
 #include "stdafx.h"
 #include "RenderWindow.h"
 #include <iostream>
+#include "GraphicsSystem.h"
 
 #define MAX_LOADSTRING 100
 
 // Global Variables:
-HINSTANCE hInst;                                // current instance
-WCHAR szTitle[ MAX_LOADSTRING ];                  // The title bar text
-WCHAR szWindowClass[ MAX_LOADSTRING ];            // the main window class name
-HWND hWnd;
+HINSTANCE g_hInst;
+WCHAR szTitle[ MAX_LOADSTRING ];
+WCHAR szWindowClass[ MAX_LOADSTRING ];
+HWND g_hWnd;
+GraphicsSystem g_graphicsSystem;
 
 // Forward declarations of functions included in this code module:
-ATOM                MyRegisterClass( HINSTANCE hInstance );
+ATOM                MyRegisterClass( HINSTANCE );
 BOOL                InitInstance( HINSTANCE, int );
 LRESULT CALLBACK    WndProc( HWND, UINT, WPARAM, LPARAM );
 INT_PTR CALLBACK    About( HWND, UINT, WPARAM, LPARAM );
 
-int APIENTRY wWinMain( _In_ HINSTANCE hInstance,
-					   _In_opt_ HINSTANCE hPrevInstance,
-					   _In_ LPWSTR    lpCmdLine,
-					   _In_ int       nCmdShow )
+int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+					   _In_ LPWSTR lpCmdLine, _In_ int nCmdShow )
 {
 	UNREFERENCED_PARAMETER( hPrevInstance );
 	UNREFERENCED_PARAMETER( lpCmdLine );
@@ -39,23 +36,27 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance,
 	}
 #ifndef NDEBUG
 	AllocConsole();
-	FILE* new_std_in_out;
-	freopen_s( &new_std_in_out, "CONOUT$", "w", stdout );
-	freopen_s( &new_std_in_out, "CONIN$", "r", stdin );
+	{
+		FILE* new_std_in_out;
+		freopen_s( &new_std_in_out, "CONOUT$", "w", stdout );
+		freopen_s( &new_std_in_out, "CONIN$", "r", stdin );
+	}
 	std::cout << "Hello world!\n";
 #endif
 	HACCEL hAccelTable = LoadAccelerators( hInstance, MAKEINTRESOURCE( IDC_RENDERWINDOW ) );
-	MSG msg;
-	ZeroMemory( &msg, sizeof( msg ) );
+	MSG msg_;
+	ZEROSTRUCT( msg_ );
 
-	while ( WM_QUIT != msg.message )
+	g_graphicsSystem.InitializeGraphicsSystem();
+
+	while ( WM_QUIT != msg_.message )
 	{
-		if ( PeekMessage( &msg, nullptr, 0, 0, PM_REMOVE ) )
+		if ( PeekMessage( &msg_, nullptr, 0, 0, PM_REMOVE ) )
 		{
-			if ( !TranslateAccelerator( msg.hwnd, hAccelTable, &msg ) )
+			if ( !TranslateAccelerator( msg_.hwnd, hAccelTable, &msg_ ) )
 			{
-				TranslateMessage( &msg );
-				DispatchMessage( &msg );
+				TranslateMessage( &msg_ );
+				DispatchMessage( &msg_ );
 			}
 		}
 	}
@@ -63,7 +64,7 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance,
 #ifndef NDEBUG
 	FreeConsole();
 #endif
-	return ( int )msg.wParam;
+	return ( int )msg_.wParam;
 }
 
 
@@ -106,18 +107,18 @@ ATOM MyRegisterClass( HINSTANCE hInstance )
 //
 BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
 {
-	hInst = hInstance; // Store instance handle in our global variable
+	g_hInst = hInstance; // Store instance handle in our global variable
 
-	hWnd = CreateWindowW( szWindowClass, szTitle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX,
-						  CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr );
+	g_hWnd = CreateWindowW( szWindowClass, szTitle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX,
+							CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr );
 
-	if ( !hWnd )
+	if ( !g_hWnd )
 	{
 		return FALSE;
 	}
 
-	ShowWindow( hWnd, nCmdShow );
-	UpdateWindow( hWnd );
+	ShowWindow( g_hWnd, nCmdShow );
+	UpdateWindow( g_hWnd );
 
 	return TRUE;
 }
