@@ -2,6 +2,7 @@
 
 #include <d3d11.h>
 #include <DirectXMath.h>
+#include <vector>
 
 struct RGBAColor
 {
@@ -62,6 +63,46 @@ struct PipelineState
 	ID3D11RasterizerState* m_rasterizerState;
 };
 
+struct Triangle
+{
+	union
+	{
+		struct
+		{
+			PositionColorVertex m_vertices[ 3u ];
+		};
+		struct
+		{
+			PositionColorVertex m_vertexA;
+			PositionColorVertex m_vertexB;
+			PositionColorVertex m_vertexC;
+		};
+	};
+	Triangle( void );
+	Triangle( const PositionColorVertex&,
+			  const PositionColorVertex&,
+			  const PositionColorVertex& );
+	Triangle( const Triangle& );
+	Triangle& operator=( const Triangle& );
+};
+
+class TriangleMesh
+{
+private:
+	Triangle* m_triangles;
+	unsigned int m_numTriangles, m_arrSize;
+public:
+	TriangleMesh( void );
+	TriangleMesh( const TriangleMesh& );
+	TriangleMesh( TriangleMesh&& );
+	TriangleMesh& operator=( const TriangleMesh& );
+	TriangleMesh& operator=( TriangleMesh&& );
+	~TriangleMesh( void );
+	void InitSize( unsigned int );
+	void AddTriangle( const Triangle& );
+	void Clear( void );
+};
+
 class GraphicsSystem
 {
 private:
@@ -73,6 +114,8 @@ private:
 	ID3D11Buffer* m_defaultVertexBuffer = nullptr;
 	D3D11_VIEWPORT m_viewport;
 	UINT m_vertexCount = 0u;
+	ID3D11Buffer* m_modelViewProjectionBuffer = nullptr;
+	std::vector<const TriangleMesh*> m_meshes;
 
 	bool m_debugRendererEnabled;
 	unsigned int m_DEBUG_LINES_numVertices;
@@ -94,6 +137,8 @@ public:
 	GraphicsSystem( void );
 	~GraphicsSystem( void );
 	void InitializeGraphicsSystem( void );
+	void AddMesh( const TriangleMesh* );
+	void ClearMeshes( void );
 	void DrawFrame( void );
 	void ReleaseAll( void );
 	void EnableDebugGraphics( bool = true );

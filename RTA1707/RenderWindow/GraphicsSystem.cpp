@@ -121,6 +121,33 @@ void Camera::Update( float _dt )
 	}
 	prevMousePos_ = currMousePos_;
 }
+Triangle::Triangle( void )
+{
+}
+Triangle::Triangle( const PositionColorVertex& _vertexA,
+					const PositionColorVertex& _vertexB,
+					const PositionColorVertex& _vertexC ) :
+	m_vertexA( _vertexA ),
+	m_vertexB( _vertexB ),
+	m_vertexC( _vertexC )
+{
+}
+Triangle::Triangle( const Triangle& _rhs ) :
+	m_vertexA( _rhs.m_vertexA ),
+	m_vertexB( _rhs.m_vertexB ),
+	m_vertexC( _rhs.m_vertexC )
+{
+}
+Triangle& Triangle::operator=( const Triangle& _rhs )
+{
+	if ( this != &_rhs )
+	{
+		m_vertexA = _rhs.m_vertexA;
+		m_vertexB = _rhs.m_vertexB;
+		m_vertexC = _rhs.m_vertexC;
+	}
+	return *this;
+}
 template <typename T>
 void ExtendDynArray( T*& _arr, unsigned int& _size )
 {
@@ -138,6 +165,91 @@ void ExtendDynArray( T*& _arr, unsigned int& _size )
 		_arr = newArr_;
 		_size <<= 1;
 	}
+}
+TriangleMesh::TriangleMesh( void ) :
+	m_triangles( nullptr ),
+	m_numTriangles( 0u ),
+	m_arrSize( 0u )
+{
+}
+TriangleMesh::TriangleMesh( const TriangleMesh& _rhs ) :
+	m_numTriangles( _rhs.m_numTriangles ),
+	m_arrSize( _rhs.m_arrSize )
+{
+	if ( 0u != m_arrSize )
+	{
+		m_triangles = new Triangle[ m_arrSize ];
+		for ( unsigned int i = 0u; i < m_numTriangles; ++i )
+			m_triangles[ i ] = _rhs.m_triangles[ i ];
+	}
+	else m_triangles = nullptr;
+}
+TriangleMesh::TriangleMesh( TriangleMesh&& _rhs ) :
+	m_triangles( _rhs.m_triangles ),
+	m_numTriangles( _rhs.m_numTriangles ),
+	m_arrSize( _rhs.m_arrSize )
+{
+	_rhs.m_triangles = nullptr;
+}
+TriangleMesh& TriangleMesh::operator=( const TriangleMesh& _rhs )
+{
+	if ( this != &_rhs )
+	{
+		delete[ ] m_triangles;
+		m_triangles = _rhs.m_triangles;
+		m_numTriangles = _rhs.m_numTriangles;
+		if ( 0u != m_arrSize )
+		{
+			m_triangles = new Triangle[ m_arrSize ];
+			for ( unsigned int i = 0u; i < m_numTriangles; ++i )
+				m_triangles[ i ] = _rhs.m_triangles[ i ];
+		}
+		else m_triangles = nullptr;
+	}
+	return *this;
+}
+TriangleMesh& TriangleMesh::operator=( TriangleMesh&& _rhs )
+{
+	if ( this != &_rhs )
+	{
+		delete[ ] m_triangles;
+		m_triangles = _rhs.m_triangles;
+		m_numTriangles = _rhs.m_numTriangles;
+		m_arrSize = _rhs.m_arrSize;
+		_rhs.m_triangles = nullptr;
+	}
+	return *this;
+}
+TriangleMesh::~TriangleMesh( void )
+{
+	delete[ ] m_triangles;
+}
+void TriangleMesh::InitSize( unsigned int _size )
+{
+	delete[ ] m_triangles;
+	if ( 0u != ( m_arrSize = _size ) )
+		m_triangles = new Triangle[ m_arrSize ];
+	else m_triangles = nullptr;
+	m_numTriangles = 0u;
+}
+void TriangleMesh::AddTriangle( const Triangle& _triangle )
+{
+	if ( m_numTriangles >= m_arrSize )
+		ExtendDynArray( m_triangles, m_arrSize );
+	m_triangles[ m_numTriangles ] = _triangle;
+	++m_numTriangles;
+}
+void TriangleMesh::Clear( void )
+{
+	m_numTriangles = 0u;
+}
+void GraphicsSystem::AddMesh( const TriangleMesh* _mesh )
+{
+	m_meshes.push_back( _mesh );
+}
+void GraphicsSystem::ClearMeshes( void )
+{
+	m_meshes.clear();
 }
 void GraphicsSystem::AddDebugLine( const PositionColorVertex& _a, const PositionColorVertex& _b )
 {
@@ -401,6 +513,7 @@ void GraphicsSystem::ReleaseAll( void )
 	m_deviceContext->Release();
 	m_device->Release();
 	m_swapChain->Release();
+	m_modelViewProjectionBuffer->Release();
 }
 void GraphicsSystem::EnableDebugGraphics( bool _enableDebugGraphics )
 {
