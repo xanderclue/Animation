@@ -19,10 +19,6 @@ struct RGBAColor
 		{
 			float m_red, m_green, m_blue, m_alpha;
 		};
-		struct
-		{
-			float r, g, b, a;
-		};
 	};
 	RGBAColor( void );
 	RGBAColor( float, float, float, float = 1.0f );
@@ -31,8 +27,8 @@ struct RGBAColor
 
 struct PositionColorVertex
 {
-	DirectX::XMFLOAT4 position;
-	DirectX::XMFLOAT4 color;
+	DirectX::XMFLOAT4 m_position;
+	DirectX::XMFLOAT4 m_color;
 	PositionColorVertex( void );
 	PositionColorVertex( float, float, float, const RGBAColor& = RGBAColor::White );
 };
@@ -52,17 +48,18 @@ struct PipelineState
 class GraphicsSystem
 {
 private:
-	unsigned int m_DEBUG_LINES_numVertices;
-	unsigned int m_DEBUG_LINES_arraySize;
-	PositionColorVertex* m_DEBUG_LINES_vertexArray;
 	PipelineState m_defaultPipeline;
-
 	ID3D11Device* m_device = nullptr;
 	ID3D11DeviceContext* m_deviceContext = nullptr;
 	IDXGISwapChain* m_swapChain = nullptr;
 	ID3D11Buffer* m_defaultVertexBuffer = nullptr;
 	D3D11_VIEWPORT m_viewport;
 	UINT m_vertexCount = 0u;
+
+	bool m_debugRendererEnabled;
+	unsigned int m_DEBUG_LINES_numVertices;
+	unsigned int m_DEBUG_LINES_arraySize;
+	PositionColorVertex* m_DEBUG_LINES_vertexArray;
 
 public:
 	GraphicsSystem( void );
@@ -81,4 +78,5 @@ public:
 	void AddDebugLine( const PositionColorVertex&, const PositionColorVertex& );
 	void DrawDebugGraphics( void );
 	void ReleaseAll( void );
+	void EnableDebugGraphics( bool = true );
 };

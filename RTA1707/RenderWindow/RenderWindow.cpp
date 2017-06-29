@@ -49,6 +49,7 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	ZEROSTRUCT( msg_ );
 
 	g_graphicsSystem.InitializeGraphicsSystem();
+	g_graphicsSystem.EnableDebugGraphics( true );
 	while ( WM_QUIT != msg_.message )
 	{
 		g_graphicsSystem.AddDebugLine( PositionColorVertex( -1.0f, 0.0f, 0.0f ), PositionColorVertex( 1.0f, 0.0f, 1.0f ) );

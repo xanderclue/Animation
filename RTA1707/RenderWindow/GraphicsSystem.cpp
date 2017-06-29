@@ -39,14 +39,14 @@ RGBAColor::RGBAColor( void )
 {
 }
 RGBAColor::RGBAColor( float _r, float _g, float _b, float _a ) :
-	r( _r ), g( _g ), b( _b ), a( _a )
+	m_red( _r ), m_green( _g ), m_blue( _b ), m_alpha( _a )
 {
 }
 PositionColorVertex::PositionColorVertex( void )
 {
 }
 PositionColorVertex::PositionColorVertex( float _x, float _y, float _z, const RGBAColor& _color ) :
-	position( _x, _y, _z, 1.0f ), color( _color.m_rgba )
+	m_position( _x, _y, _z, 1.0f ), m_color( _color.m_rgba )
 {
 }
 void ExtendVertexArray( PositionColorVertex*& _arr, unsigned int& _size )
@@ -98,12 +98,13 @@ void GraphicsSystem::DrawDebugGraphics( void )
 	m_DEBUG_LINES_numVertices = 0u;
 	vertexBuffer_->Release();
 }
-GraphicsSystem::GraphicsSystem( void )
+GraphicsSystem::GraphicsSystem( void ) :
+	m_debugRendererEnabled( true ),
+	m_DEBUG_LINES_arraySize( 1024u ),
+	m_DEBUG_LINES_numVertices( 0u )
 {
 	ZEROSTRUCT( m_defaultPipeline );
-	m_DEBUG_LINES_arraySize = 1024u;
-	m_DEBUG_LINES_vertexArray = new PositionColorVertex[ 1024u ];
-	m_DEBUG_LINES_numVertices = 0u;
+	m_DEBUG_LINES_vertexArray = new PositionColorVertex[ m_DEBUG_LINES_arraySize ];
 }
 GraphicsSystem::~GraphicsSystem( void )
 {
@@ -260,36 +261,47 @@ void GraphicsSystem::InitializeRasterizerState( void )
 }
 void GraphicsSystem::InitializeShadersAndInputLayout( void )
 {
-	ID3DBlob *VS, *PS;
+	ID3DBlob *vertexShaderBlob_, *pixelShaderBlob_;
 #ifndef NDEBUG
-	g_hResult = D3DCompileFromFile( L"shaders.shader", nullptr, nullptr, "VShader", "vs_5_0", D3DCOMPILE_DEBUG, 0u, &VS, nullptr );
-	g_hResult = D3DCompileFromFile( L"shaders.shader", nullptr, nullptr, "PShader", "ps_5_0", D3DCOMPILE_DEBUG, 0u, &PS, nullptr );
+	g_hResult = D3DCompileFromFile( L"shaders.shader", nullptr, nullptr, "VShader",
+									"vs_5_0", D3DCOMPILE_DEBUG, 0u, &vertexShaderBlob_, nullptr );
+	g_hResult = D3DCompileFromFile( L"shaders.shader", nullptr, nullptr, "PShader",
+									"ps_5_0", D3DCOMPILE_DEBUG, 0u, &pixelShaderBlob_, nullptr );
 #else
-	g_hResult = D3DCompileFromFile( L"shaders.shader", nullptr, nullptr, "VShader", "vs_5_0", 0u, 0u, &VS, nullptr );
-	g_hResult = D3DCompileFromFile( L"shaders.shader", nullptr, nullptr, "PShader", "ps_5_0", 0u, 0u, &PS, nullptr );
+	g_hResult = D3DCompileFromFile( L"shaders.shader", nullptr, nullptr, "VShader",
+									"vs_5_0", 0u, 0u, &vertexShaderBlob_, nullptr );
+	g_hResult = D3DCompileFromFile( L"shaders.shader", nullptr, nullptr, "PShader",
+									"ps_5_0", 0u, 0u, &pixelShaderBlob_, nullptr );
 #endif
-	g_hResult = m_device->CreateVertexShader( VS->GetBufferPointer(), VS->GetBufferSize(), NULL, &m_defaultPipeline.m_vertexShader );
-	g_hResult = m_device->CreatePixelShader( PS->GetBufferPointer(), PS->GetBufferSize(), NULL, &m_defaultPipeline.m_pixelShader );
+	g_hResult = m_device->CreateVertexShader( vertexShaderBlob_->GetBufferPointer(), vertexShaderBlob_->GetBufferSize(),
+											  NULL, &m_defaultPipeline.m_vertexShader );
+	g_hResult = m_device->CreatePixelShader( pixelShaderBlob_->GetBufferPointer(), pixelShaderBlob_->GetBufferSize(),
+											 NULL, &m_defaultPipeline.m_pixelShader );
 
-	static const D3D11_INPUT_ELEMENT_DESC desc[ 2u ] =
+	static const D3D11_INPUT_ELEMENT_DESC inputElementDesc_[ 2u ] =
 	{
-		{ "POSITION", 0u, DXGI_FORMAT_R32G32B32A32_FLOAT, 0u, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0u },
-		{ "COLOR", 0u, DXGI_FORMAT_R32G32B32A32_FLOAT, 0u, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0u }
+		{ "POSITION", 0u, DXGI_FORMAT_R32G32B32A32_FLOAT, 0u,
+		D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0u },
+		{ "COLOR", 0u, DXGI_FORMAT_R32G32B32A32_FLOAT, 0u,
+		D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0u }
 	};
-	g_hResult = m_device->CreateInputLayout( desc, 2u, VS->GetBufferPointer(), VS->GetBufferSize(), &m_defaultPipeline.m_inputLayout );
+	g_hResult = m_device->CreateInputLayout( inputElementDesc_, 2u, vertexShaderBlob_->GetBufferPointer(), vertexShaderBlob_->GetBufferSize(), &m_defaultPipeline.m_inputLayout );
 }
 void GraphicsSystem::DrawFrame( void )
 {
-	static const UINT stride = sizeof( PositionColorVertex );
-	static const UINT offset = 0u;
+	static const UINT stride_ = sizeof( PositionColorVertex );
+	static const UINT offset_ = 0u;
 	ID3D11DeviceContext& deviceContext_ = *m_deviceContext;
 
 	deviceContext_.ClearRenderTargetView( m_defaultPipeline.m_renderTargetView, RGBAColor::Black.m_channels );
 	deviceContext_.ClearDepthStencilView( m_defaultPipeline.m_depthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0ui8 );
-	deviceContext_.IASetVertexBuffers( 0, 1, &m_defaultVertexBuffer, &stride, &offset );
+	deviceContext_.IASetVertexBuffers( 0, 1, &m_defaultVertexBuffer, &stride_, &offset_ );
 	deviceContext_.IASetPrimitiveTopology( D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 	deviceContext_.Draw( m_vertexCount, 0u );
-	DrawDebugGraphics();
+	if ( m_debugRendererEnabled )
+		DrawDebugGraphics();
+	else
+		m_DEBUG_LINES_numVertices = 0u;
 	g_hResult = m_swapChain->Present( 1u, 0u );
 }
 void GraphicsSystem::ReleaseAll( void )
@@ -306,4 +318,8 @@ void GraphicsSystem::ReleaseAll( void )
 	m_deviceContext->Release();
 	m_device->Release();
 	m_swapChain->Release();
+}
+void GraphicsSystem::EnableDebugGraphics( bool _enableDebugGraphics )
+{
+	m_debugRendererEnabled = _enableDebugGraphics;
 }

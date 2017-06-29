@@ -7,9 +7,9 @@
 #include <fbxsdk.h>
 #endif
 
-FbxString GetAttributeTypeName( FbxNodeAttribute::EType type )
+FbxString GetAttributeTypeName( FbxNodeAttribute::EType _type )
 {
-	switch ( type )
+	switch ( _type )
 	{
 		case FbxNodeAttribute::eUnknown: return "unidentified";
 		case FbxNodeAttribute::eNull: return "null";
@@ -34,46 +34,45 @@ FbxString GetAttributeTypeName( FbxNodeAttribute::EType type )
 		default: return "unknown";
 	}
 }
-static int numTabs = 0;
+static int g_numTabs = 0;
 void PrintTabs( void )
 {
-	for ( int i = 0; i < numTabs; ++i )
+	for ( int i = 0; i < g_numTabs; ++i )
 		printf( "\t" );
 }
-void PrintAttribute( const FbxNodeAttribute* pAttribute )
+void PrintAttribute( const FbxNodeAttribute* _nodeAttribute )
 {
-	if ( nullptr != pAttribute )
+	if ( nullptr != _nodeAttribute )
 	{
 		PrintTabs();
 		printf( "<attribute type='%s' name='%s'/>\n",
-				GetAttributeTypeName( pAttribute->GetAttributeType() ).Buffer(),
-				pAttribute->GetName() );
+				GetAttributeTypeName( _nodeAttribute->GetAttributeType() ).Buffer(),
+				_nodeAttribute->GetName() );
 	}
 }
-void PrintNode( const FbxNode* pNode )
+void PrintNode( const FbxNode* _node )
 {
 	PrintTabs();
 	{
-		const char* const nodeName = pNode->GetName();
-		const FbxDouble3 translation = pNode->LclTranslation.Get();
-		const FbxDouble3 rotation = pNode->LclRotation.Get();
-		const FbxDouble3 scaling = pNode->LclScaling.Get();
+		const FbxDouble3 translation_ = _node->LclTranslation.Get();
+		const FbxDouble3 rotation_ = _node->LclRotation.Get();
+		const FbxDouble3 scaling_ = _node->LclScaling.Get();
 		printf( "<node name='%s' translation='(%f, %f, %f)' rotation='(%f, %f, %f)' scaling='(%f, %f, %f)'>\n",
-				nodeName,
-				translation[ 0 ], translation[ 1 ], translation[ 2 ],
-				rotation[ 0 ], rotation[ 1 ], rotation[ 2 ],
-				scaling[ 0 ], scaling[ 1 ], scaling[ 2 ]
+				_node->GetName(),
+				translation_[ 0 ], translation_[ 1 ], translation_[ 2 ],
+				rotation_[ 0 ], rotation_[ 1 ], rotation_[ 2 ],
+				scaling_[ 0 ], scaling_[ 1 ], scaling_[ 2 ]
 		);
 	}
-	++numTabs;
+	++g_numTabs;
 	{
 		int i = 0;
-		for ( ; i < pNode->GetNodeAttributeCount(); ++i )
-			PrintAttribute( pNode->GetNodeAttributeByIndex( i ) );
-		for ( i = 0; i < pNode->GetChildCount(); ++i )
-			PrintNode( pNode->GetChild( i ) );
+		for ( ; i < _node->GetNodeAttributeCount(); ++i )
+			PrintAttribute( _node->GetNodeAttributeByIndex( i ) );
+		for ( i = 0; i < _node->GetChildCount(); ++i )
+			PrintNode( _node->GetChild( i ) );
 	}
-	--numTabs;
+	--g_numTabs;
 	PrintTabs();
 	printf( "</node>\n" );
 }
