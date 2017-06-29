@@ -52,7 +52,7 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	ZEROSTRUCT( msg_ );
 
 	DirectX::XMFLOAT4X4 teddyWorldMatrix_ = GraphicsSystem::IDENTITY;
-	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixScaling( 0.01f, 0.01f, 0.01f ) ) );
+	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixScaling( 0.03f, 0.03f, 0.03f ) ) );
 	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) ) ) );
 	g_graphicsSystem.InitializeGraphicsSystem();
 	g_graphicsSystem.EnableDebugGraphics( true );
@@ -64,8 +64,6 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 		t1_ = t2_;
 		t2_ = std::chrono::system_clock::now().time_since_epoch().count();
 		g_graphicsSystem.GetCamera().Update( ( t2_ - t1_ ) * 0.0000001f );
-		g_graphicsSystem.AddDebugLine( PositionColorVertex( -1.0f, 0.0f, 0.0f ),
-									   PositionColorVertex( 1.0f, 0.0f, 1.0f ) );
 		g_graphicsSystem.DrawFrame();
 		if ( PeekMessage( &msg_, nullptr, 0, 0, PM_REMOVE ) )
 		{

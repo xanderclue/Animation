@@ -77,10 +77,9 @@ void Camera::RotateCamera( float _x, float _y )
 	XMStoreFloat4x4(
 		&m_cameraTransform,
 		XMMatrixMultiply( XMMatrixMultiply(
-		DirectX::XMMatrixRotationX( _x ),
+		DirectX::XMMatrixRotationX( DirectX::XMConvertToRadians( _x ) ),
 		XMLoadFloat4x4( &m_cameraTransform ) ),
-		DirectX::XMMatrixRotationY( _y ) ) );
-
+		DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( _y ) ) ) );
 	m_cameraTransform._41 = x_;
 	m_cameraTransform._42 = y_;
 	m_cameraTransform._43 = z_;
@@ -120,7 +119,7 @@ void Camera::Update( float _dt )
 	{
 		const float dx_ = currMousePos_.x - prevMousePos_.x;
 		const float dy_ = currMousePos_.y - prevMousePos_.y;
-		_dt *= 0.5f;
+		_dt *= 25.0f;
 		RotateCamera( dy_ * _dt, dx_ * _dt );
 	}
 	prevMousePos_ = currMousePos_;
@@ -367,8 +366,8 @@ GraphicsSystem::GraphicsSystem( void ) :
 	m_DEBUG_LINES_numVertices( 0u )
 {
 	ZEROSTRUCT( m_defaultPipeline );
-	m_mainCamera.TranslateCamera( 0.0f, 0.0f, -2.0f );
-	m_mainCamera.RotateCamera( 0.0f, 0.0f );
+	m_mainCamera.TranslateCamera( 0.0f, 5.0f, -7.0f );
+	m_mainCamera.RotateCamera( 28.0f, 0.0f );
 	m_DEBUG_LINES_vertexArray = new PositionColorVertex[ m_DEBUG_LINES_arraySize ];
 }
 GraphicsSystem::~GraphicsSystem( void )
