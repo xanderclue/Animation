@@ -66,10 +66,10 @@ void PrintNode( const FbxNode* _node )
 	}
 	++g_numTabs;
 	{
-		int i = 0;
-		for ( ; i < _node->GetNodeAttributeCount(); ++i )
+		int i, j;
+		for ( i = 0, j = _node->GetNodeAttributeCount(); i < j; ++i )
 			PrintAttribute( _node->GetNodeAttributeByIndex( i ) );
-		for ( i = 0; i < _node->GetChildCount(); ++i )
+		for ( i = 0, j = _node->GetChildCount(); i < j; ++i )
 			PrintNode( _node->GetChild( i ) );
 	}
 	--g_numTabs;

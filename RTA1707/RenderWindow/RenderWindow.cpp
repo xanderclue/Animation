@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "RenderWindow.h"
 #include <iostream>
+#include <chrono>
 #include "GraphicsSystem.h"
 #include "FBXDLL.h"
 
@@ -50,9 +51,14 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 
 	g_graphicsSystem.InitializeGraphicsSystem();
 	g_graphicsSystem.EnableDebugGraphics( true );
+	long long t2_ = std::chrono::system_clock::now().time_since_epoch().count(), t1_;
 	while ( WM_QUIT != msg_.message )
 	{
-		g_graphicsSystem.AddDebugLine( PositionColorVertex( -1.0f, 0.0f, 0.0f ), PositionColorVertex( 1.0f, 0.0f, 1.0f ) );
+		t1_ = t2_;
+		t2_ = std::chrono::system_clock::now().time_since_epoch().count();
+		g_graphicsSystem.GetCamera().Update( ( t2_ - t1_ ) * 0.0000001f );
+		g_graphicsSystem.AddDebugLine( PositionColorVertex( -1.0f, 0.0f, 0.0f ),
+									   PositionColorVertex( 1.0f, 0.0f, 1.0f ) );
 		g_graphicsSystem.DrawFrame();
 		if ( PeekMessage( &msg_, nullptr, 0, 0, PM_REMOVE ) )
 		{

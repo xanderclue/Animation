@@ -49,24 +49,105 @@ PositionColorVertex::PositionColorVertex( float _x, float _y, float _z, const RG
 	m_position( _x, _y, _z, 1.0f ), m_color( _color.m_rgba )
 {
 }
-void ExtendVertexArray( PositionColorVertex*& _arr, unsigned int& _size )
+Camera::Camera( void )
 {
-	PositionColorVertex* newArr_ = new PositionColorVertex[ _size << 1 ];
-	for ( unsigned int i = 0u; i < _size; ++i )
-		newArr_[ i ] = _arr[ i ];
-	delete[ ] _arr;
-	_arr = newArr_;
-	_size <<= 1;
+	XMStoreFloat4x4( &m_cameraTransform, DirectX::XMMatrixIdentity() );
+}
+void Camera::TranslateCamera( float _x, float _y, float _z )
+{
+	XMStoreFloat4x4( &m_cameraTransform, XMMatrixMultiply(
+		DirectX::XMMatrixTranslation( _x, _y, _z ),
+		XMLoadFloat4x4( &m_cameraTransform ) ) );
+}
+void Camera::RotateCamera( float _x, float _y )
+{
+	const float x_ = m_cameraTransform._41;
+	const float y_ = m_cameraTransform._42;
+	const float z_ = m_cameraTransform._43;
+
+	m_cameraTransform._41 = 0.0f;
+	m_cameraTransform._42 = 0.0f;
+	m_cameraTransform._43 = 0.0f;
+
+	XMStoreFloat4x4(
+		&m_cameraTransform,
+		XMMatrixMultiply( XMMatrixMultiply(
+		DirectX::XMMatrixRotationX( _x ),
+		XMLoadFloat4x4( &m_cameraTransform ) ),
+		DirectX::XMMatrixRotationY( _y ) ) );
+
+	m_cameraTransform._41 = x_;
+	m_cameraTransform._42 = y_;
+	m_cameraTransform._43 = z_;
+}
+DirectX::XMMATRIX Camera::GetViewMatrix( void ) const
+{
+	return XMMatrixInverse( nullptr, XMLoadFloat4x4( &m_cameraTransform ) );
+}
+void Camera::Update( float _dt )
+{
+	static struct
+	{
+		float x = 0.0f, y = 0.0f;
+	} currMousePos_, prevMousePos_;
+	{
+		POINT p_;
+		GetCursorPos( &p_ );
+		//ScreenToClient( g_hWnd, &p_ );
+		currMousePos_.x = ( float )p_.x;
+		currMousePos_.y = ( float )p_.y;
+	}
+
+	_dt *= 1.5f;
+	{
+		float x_ = 0.0f, y_ = 0.0f, z_ = 0.0f;
+		if ( GetAsyncKeyState( 'W' ) ) z_ += _dt;
+		if ( GetAsyncKeyState( 'S' ) ) z_ -= _dt;
+		if ( GetAsyncKeyState( 'A' ) ) x_ -= _dt;
+		if ( GetAsyncKeyState( 'D' ) ) x_ += _dt;
+		if ( GetAsyncKeyState( VK_SHIFT ) ) y_ -= _dt;
+		if ( GetAsyncKeyState( VK_SPACE ) ) y_ += _dt;
+		TranslateCamera( x_, y_, z_ );
+	}
+
+	if ( GetAsyncKeyState( VK_LBUTTON ) ||
+		 GetAsyncKeyState( VK_MBUTTON ) ||
+		 GetAsyncKeyState( VK_RBUTTON ) )
+	{
+		const float dx_ = currMousePos_.x - prevMousePos_.x;
+		const float dy_ = currMousePos_.y - prevMousePos_.y;
+		_dt *= 0.5f;
+		RotateCamera( dy_ * _dt, dx_ * _dt );
+	}
+	prevMousePos_ = currMousePos_;
+}
+template <typename T>
+void ExtendDynArray( T*& _arr, unsigned int& _size )
+{
+	if ( 0u == _size )
+	{
+		delete[ ] _arr;
+		_arr = new T[ _size = 1u ];
+	}
+	else
+	{
+		T* const newArr_ = new T[ _size << 1 ];
+		for ( unsigned int i = 0u; i < _size; ++i )
+			newArr_[ i ] = _arr[ i ];
+		delete[ ] _arr;
+		_arr = newArr_;
+		_size <<= 1;
+	}
 }
 void GraphicsSystem::AddDebugLine( const PositionColorVertex& _a, const PositionColorVertex& _b )
 {
 	if ( m_DEBUG_LINES_arraySize == m_DEBUG_LINES_numVertices )
-		ExtendVertexArray( m_DEBUG_LINES_vertexArray, m_DEBUG_LINES_arraySize );
+		ExtendDynArray( m_DEBUG_LINES_vertexArray, m_DEBUG_LINES_arraySize );
 	m_DEBUG_LINES_vertexArray[ m_DEBUG_LINES_numVertices ] = _a;
 	++m_DEBUG_LINES_numVertices;
 
 	if ( m_DEBUG_LINES_arraySize == m_DEBUG_LINES_numVertices )
-		ExtendVertexArray( m_DEBUG_LINES_vertexArray, m_DEBUG_LINES_arraySize );
+		ExtendDynArray( m_DEBUG_LINES_vertexArray, m_DEBUG_LINES_arraySize );
 	m_DEBUG_LINES_vertexArray[ m_DEBUG_LINES_numVertices ] = _b;
 	++m_DEBUG_LINES_numVertices;
 }
@@ -104,6 +185,8 @@ GraphicsSystem::GraphicsSystem( void ) :
 	m_DEBUG_LINES_numVertices( 0u )
 {
 	ZEROSTRUCT( m_defaultPipeline );
+	m_mainCamera.TranslateCamera( 0.0f, 0.0f, -2.0f );
+	m_mainCamera.RotateCamera( 0.0f, 0.0f );
 	m_DEBUG_LINES_vertexArray = new PositionColorVertex[ m_DEBUG_LINES_arraySize ];
 }
 GraphicsSystem::~GraphicsSystem( void )
@@ -322,4 +405,8 @@ void GraphicsSystem::ReleaseAll( void )
 void GraphicsSystem::EnableDebugGraphics( bool _enableDebugGraphics )
 {
 	m_debugRendererEnabled = _enableDebugGraphics;
+}
+Camera& GraphicsSystem::GetCamera( void )
+{
+	return m_mainCamera;
 }
