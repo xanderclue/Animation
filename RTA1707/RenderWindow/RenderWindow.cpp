@@ -41,7 +41,8 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 		freopen_s( &new_std_in_out, "CONIN$", "r", stdin );
 	}
 	std::cout << "Hello world!\n";
-	std::cout << FBXDLL::TestFunc( 14 );
+	std::cout << FBXDLL::TestFunc_Square( 14 ) << std::endl;
+	FBXDLL::TestFBX_PrintInfo( "test.fbx" );
 #endif
 	HACCEL hAccelTable = LoadAccelerators( hInstance, MAKEINTRESOURCE( IDC_RENDERWINDOW ) );
 	MSG msg_;

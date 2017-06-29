@@ -8,5 +8,6 @@
 
 namespace FBXDLL
 {
-	FBXDLL_API int TestFunc( int _x );
+	FBXDLL_API int TestFunc_Square( int );
+	FBXDLL_API bool TestFBX_PrintInfo( const char* const );
 }
