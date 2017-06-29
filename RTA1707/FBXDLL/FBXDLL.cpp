@@ -34,3 +34,24 @@ bool FBXDLL::TestFBX_PrintInfo( const char* const _file )
 	manager_->Destroy();
 	return true;
 }
+
+const FbxPose* GetBindPose( FbxScene* _scene )
+{
+	const int poseCount_ = _scene->GetPoseCount();
+	const FbxPose* pose_;
+	for ( int i = 0; i < poseCount_; ++i )
+		if ( ( pose_ = _scene->GetPose( i ) )->IsBindPose() )
+			return pose_;
+	return nullptr;
+}
+
+const FbxSkeleton* GetSkeletonRoot( const FbxPose* _bindPose )
+{
+	const int nodeCount_ = _bindPose->GetCount();
+	const FbxSkeleton* skeleton_;
+	for ( int i = 0; i < nodeCount_; ++i )
+		if ( nullptr != ( skeleton_ = _bindPose->GetNode( i )->GetSkeleton() ) )
+			if ( skeleton_->IsSkeletonRoot() )
+				return skeleton_;
+	return nullptr;
+}
