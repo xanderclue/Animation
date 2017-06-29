@@ -45,11 +45,6 @@ std::vector<PositionTriangle> FBXDLL::FBX_GetBindPoseMesh( const char* const _fi
 	return triangles_;
 }
 
-int FBXDLL::TestFunc_Square( int _x )
-{
-	return _x * _x;
-}
-
 #include "PrintNode.h"
 bool FBXDLL::TestFBX_PrintInfo( const char* const _file )
 {

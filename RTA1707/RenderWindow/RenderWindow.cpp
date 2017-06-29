@@ -43,8 +43,6 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 		freopen_s( &new_std_in_out, "CONOUT$", "w", stdout );
 		freopen_s( &new_std_in_out, "CONIN$", "r", stdin );
 	}
-	std::cout << "Hello world!\n";
-	std::cout << FBXDLL::TestFunc_Square( 14 ) << std::endl;
 	FBXDLL::TestFBX_PrintInfo( "Teddy_Idle.fbx" );
 #endif
 	HACCEL hAccelTable = LoadAccelerators( hInstance, MAKEINTRESOURCE( IDC_RENDERWINDOW ) );
@@ -54,9 +52,17 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	DirectX::XMFLOAT4X4 teddyWorldMatrix_ = GraphicsSystem::IDENTITY;
 	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixScaling( 0.03f, 0.03f, 0.03f ) ) );
 	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) ) ) );
+	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixTranslation( 3.0f, 0.0f, 0.0f ) ) );
+
+	DirectX::XMFLOAT4X4 mageWorldMatrix_ = GraphicsSystem::IDENTITY;
+	XMStoreFloat4x4( &mageWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &mageWorldMatrix_ ), DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) ) ) );
+	XMStoreFloat4x4( &mageWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &mageWorldMatrix_ ), DirectX::XMMatrixTranslation( -3.0f, 0.0f, 0.0f ) ) );
+
 	g_graphicsSystem.InitializeGraphicsSystem();
 	g_graphicsSystem.EnableDebugGraphics( true );
+	TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Mage_Idle.fbx" ) );
 	TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Teddy_Idle.fbx" ) );
+	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ );
 	g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ );
 	long long t2_ = std::chrono::system_clock::now().time_since_epoch().count(), t1_;
 	while ( WM_QUIT != msg_.message )

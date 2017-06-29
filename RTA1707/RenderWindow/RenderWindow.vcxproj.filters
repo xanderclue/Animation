@@ -65,5 +65,8 @@
     <None Include="Teddy_Idle.fbx">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="Mage_Idle.fbx">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

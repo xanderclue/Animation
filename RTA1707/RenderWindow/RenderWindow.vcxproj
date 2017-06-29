@@ -169,6 +169,7 @@
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Mage_Idle.fbx" />
     <None Include="shaders.shader" />
     <None Include="Teddy_Idle.fbx" />
   </ItemGroup>
