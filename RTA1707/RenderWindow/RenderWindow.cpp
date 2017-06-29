@@ -67,6 +67,16 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	long long t2_ = std::chrono::system_clock::now().time_since_epoch().count(), t1_;
 	while ( WM_QUIT != msg_.message )
 	{
+		static bool wireframeKeyPressed_ = true;
+		if ( GetAsyncKeyState( 'T' ) )
+		{
+			if ( !wireframeKeyPressed_ )
+			{
+				g_graphicsSystem.ToggleWireframe();
+				wireframeKeyPressed_ = true;
+			}
+		}
+		else wireframeKeyPressed_ = false;
 		t1_ = t2_;
 		t2_ = std::chrono::system_clock::now().time_since_epoch().count();
 		g_graphicsSystem.GetCamera().Update( ( t2_ - t1_ ) * 0.0000001f );

@@ -534,6 +534,16 @@ void GraphicsSystem::InitializeRasterizerState( void )
 	rasterizerDesc_.SlopeScaledDepthBias = 0.0f;
 	g_hResult = m_device->CreateRasterizerState( &rasterizerDesc_, &m_defaultPipeline.m_rasterizerState );
 }
+void GraphicsSystem::ToggleWireframe( void )
+{
+	m_defaultPipeline.m_rasterizerState->Release();
+	m_deviceContext->RSGetState( &m_defaultPipeline.m_rasterizerState );
+	D3D11_RASTERIZER_DESC rasterizerDesc_;
+	m_defaultPipeline.m_rasterizerState->GetDesc( &rasterizerDesc_ );
+	rasterizerDesc_.FillMode = D3D11_FILL_WIREFRAME == rasterizerDesc_.FillMode ? D3D11_FILL_SOLID : D3D11_FILL_WIREFRAME;
+	g_hResult = m_device->CreateRasterizerState( &rasterizerDesc_, &m_defaultPipeline.m_rasterizerState );
+	m_deviceContext->RSSetState( m_defaultPipeline.m_rasterizerState );
+}
 void GraphicsSystem::InitializeShadersAndInputLayout( void )
 {
 	ID3DBlob *vertexShaderBlob_, *pixelShaderBlob_;

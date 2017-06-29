@@ -155,4 +155,5 @@ public:
 	void EnableDebugGraphics( bool = true );
 	void AddDebugLine( const PositionColorVertex&, const PositionColorVertex& );
 	Camera& GetCamera( void );
+	void ToggleWireframe( void );
 };
