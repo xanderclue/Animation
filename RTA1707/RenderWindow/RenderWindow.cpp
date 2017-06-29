@@ -48,6 +48,7 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	g_graphicsSystem.InitializeGraphicsSystem();
 	while ( WM_QUIT != msg_.message )
 	{
+		g_graphicsSystem.AddDebugLine( PositionColorVertex( -1.0f, 0.0f, 0.0f ), PositionColorVertex( 1.0f, 0.0f, 1.0f ) );
 		g_graphicsSystem.DrawFrame();
 		if ( PeekMessage( &msg_, nullptr, 0, 0, PM_REMOVE ) )
 		{
