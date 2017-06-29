@@ -354,7 +354,7 @@ void GraphicsSystem::DrawMesh( const TriangleMesh& _mesh, const DirectX::XMFLOAT
 	static const UINT offset_ = 0u;
 	m_deviceContext->IASetVertexBuffers( 0, 1, &vertexBuffer_, &stride_, &offset_ );
 	m_deviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
-	m_modelViewProjection.m_model = _world;
+	XMStoreFloat4x4( &m_modelViewProjection.m_model, XMMatrixTranspose( XMLoadFloat4x4( &_world ) ) );
 	m_deviceContext->UpdateSubresource( m_modelViewProjectionBuffer, 0u, nullptr, &m_modelViewProjection, 0u, 0u );
 	m_deviceContext->VSSetConstantBuffers( 0u, 1u, &m_modelViewProjectionBuffer );
 	m_deviceContext->Draw( numVertices_, 0u );

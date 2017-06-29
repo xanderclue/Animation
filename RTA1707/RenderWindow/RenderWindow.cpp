@@ -20,6 +20,8 @@ BOOL InitInstance( HINSTANCE, int );
 LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
 INT_PTR CALLBACK About( HWND, UINT, WPARAM, LPARAM );
 
+TriangleMesh PositionTrianglesToMesh( const std::vector<PositionTriangle>&, const RGBAColor& = RGBAColor::White );
+
 int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 					   _In_ LPWSTR lpCmdLine, _In_ int nCmdShow )
 {
@@ -49,8 +51,13 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	MSG msg_;
 	ZEROSTRUCT( msg_ );
 
+	DirectX::XMFLOAT4X4 teddyWorldMatrix_ = GraphicsSystem::IDENTITY;
+	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixScaling( 0.01f, 0.01f, 0.01f ) ) );
+	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) ) ) );
 	g_graphicsSystem.InitializeGraphicsSystem();
 	g_graphicsSystem.EnableDebugGraphics( true );
+	TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Teddy_Idle.fbx" ) );
+	g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ );
 	long long t2_ = std::chrono::system_clock::now().time_since_epoch().count(), t1_;
 	while ( WM_QUIT != msg_.message )
 	{
@@ -127,4 +134,30 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 			return DefWindowProc( hWnd, message, wParam, lParam );
 	}
 	return 0;
+}
+
+TriangleMesh PositionTrianglesToMesh( const std::vector<PositionTriangle>& _triangles, const RGBAColor& _color )
+{
+	TriangleMesh outMesh_;
+	Triangle tempTriangle_;
+	tempTriangle_.m_vertexA.m_color =
+		tempTriangle_.m_vertexB.m_color =
+		tempTriangle_.m_vertexC.m_color = _color.m_rgba;
+	tempTriangle_.m_vertexA.m_position.w =
+		tempTriangle_.m_vertexB.m_position.w =
+		tempTriangle_.m_vertexC.m_position.w = 1.0f;
+	for ( unsigned int i = 0u; i < _triangles.size(); ++i )
+	{
+		tempTriangle_.m_vertexA.m_position.x = _triangles[ i ].a.x;
+		tempTriangle_.m_vertexA.m_position.y = _triangles[ i ].a.y;
+		tempTriangle_.m_vertexA.m_position.z = _triangles[ i ].a.z;
+		tempTriangle_.m_vertexB.m_position.x = _triangles[ i ].b.x;
+		tempTriangle_.m_vertexB.m_position.y = _triangles[ i ].b.y;
+		tempTriangle_.m_vertexB.m_position.z = _triangles[ i ].b.z;
+		tempTriangle_.m_vertexC.m_position.x = _triangles[ i ].c.x;
+		tempTriangle_.m_vertexC.m_position.y = _triangles[ i ].c.y;
+		tempTriangle_.m_vertexC.m_position.z = _triangles[ i ].c.z;
+		outMesh_.AddTriangle( tempTriangle_ );
+	}
+	return outMesh_;
 }
