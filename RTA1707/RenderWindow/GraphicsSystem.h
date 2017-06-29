@@ -88,7 +88,6 @@ struct Triangle
 
 class TriangleMesh
 {
-	friend class GraphicsSystem;
 private:
 	Triangle* m_triangles;
 	unsigned int m_numTriangles, m_arrSize;
@@ -102,6 +101,8 @@ public:
 	void InitSize( unsigned int );
 	void AddTriangle( const Triangle& );
 	void Clear( void );
+	const Triangle* GetTriangles( void ) const;
+	unsigned int GetNumTriangles( void ) const;
 };
 
 class GraphicsSystem
@@ -125,6 +126,7 @@ private:
 	unsigned int m_DEBUG_LINES_arraySize;
 	PositionColorVertex* m_DEBUG_LINES_vertexArray;
 
+	void DrawGroundLines( void );
 	void InitializeViewport( void );
 	void SetPipelineStages( PipelineState* );
 	void SetupDefaultBuffer( void );

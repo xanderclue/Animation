@@ -247,6 +247,14 @@ void TriangleMesh::Clear( void )
 {
 	m_numTriangles = 0u;
 }
+const Triangle* TriangleMesh::GetTriangles( void ) const
+{
+	return m_triangles;
+}
+unsigned int TriangleMesh::GetNumTriangles( void ) const
+{
+	return m_numTriangles;
+}
 void GraphicsSystem::AddMesh( const TriangleMesh* _mesh, const DirectX::XMFLOAT4X4& _world )
 {
 	m_meshes.push_back( _mesh );
@@ -322,13 +330,14 @@ void GraphicsSystem::SetMvpBuffer( void )
 }
 void GraphicsSystem::DrawMesh( const TriangleMesh& _mesh, const DirectX::XMFLOAT4X4& _world )
 {
-	const unsigned int numTriangles_ = _mesh.m_numTriangles;
+	const unsigned int numTriangles_ = _mesh.GetNumTriangles();
 	const unsigned int numVertices_ = numTriangles_ * 3u;
+	const Triangle* const triangles_ = _mesh.GetTriangles();
 	PositionColorVertex* vertices_ = new PositionColorVertex[ numVertices_ ];
 	unsigned int i, j;
 	for ( i = 0u; i < numTriangles_; ++i )
 		for ( j = 0u; j < 3u; ++j )
-			vertices_[ i * 3u + j ] = _mesh.m_triangles[ i ].m_vertices[ j ];
+			vertices_[ i * 3u + j ] = triangles_[ i ].m_vertices[ j ];
 	ID3D11Buffer* vertexBuffer_;
 	D3D11_BUFFER_DESC bufferDesc_;
 	ZEROSTRUCT( bufferDesc_ );
@@ -554,6 +563,44 @@ void GraphicsSystem::InitializeShadersAndInputLayout( void )
 	};
 	g_hResult = m_device->CreateInputLayout( inputElementDesc_, 2u, vertexShaderBlob_->GetBufferPointer(), vertexShaderBlob_->GetBufferSize(), &m_defaultPipeline.m_inputLayout );
 }
+void GraphicsSystem::DrawGroundLines( void )
+{
+	static const unsigned int numVertices_ = 44u;
+	static PositionColorVertex groundVertices_[ numVertices_ ];
+	static bool groundInited = false;
+	if ( !groundInited )
+	{
+		for ( unsigned int i = 0u; i < 11u; ++i )
+		{
+			groundVertices_[ 2u * i ] = PositionColorVertex( 7.5f, 0.0f, i * 1.5f - 7.5f, RGBAColor::Green );
+			groundVertices_[ 2u * i + 1u ] = PositionColorVertex( -7.5f, 0.0f, i * 1.5f - 7.5f, RGBAColor::Green );
+			groundVertices_[ 2u * i + 22u ] = PositionColorVertex( i * 1.5f - 7.5f, 0.0f, 7.5f, RGBAColor::Green );
+			groundVertices_[ 2u * i + 23u ] = PositionColorVertex( i * 1.5f - 7.5f, 0.0f, -7.5f, RGBAColor::Green );
+		}
+		groundInited = true;
+	}
+	static const UINT stride_ = sizeof( PositionColorVertex );
+	static const UINT offset_ = 0u;
+	D3D11_BUFFER_DESC bufferDesc_;
+	ZEROSTRUCT( bufferDesc_ );
+	ID3D11Buffer* vertexBuffer_;
+	D3D11_MAPPED_SUBRESOURCE mappedResource_;
+
+	bufferDesc_.Usage = D3D11_USAGE_DYNAMIC;
+	bufferDesc_.ByteWidth = numVertices_ * sizeof( PositionColorVertex );
+	bufferDesc_.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bufferDesc_.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	g_hResult = m_device->CreateBuffer( &bufferDesc_, nullptr, &vertexBuffer_ );
+	g_hResult = m_deviceContext->Map( vertexBuffer_, 0u, D3D11_MAP_WRITE_DISCARD, 0u, &mappedResource_ );
+	memcpy( mappedResource_.pData, groundVertices_, numVertices_ * sizeof( PositionColorVertex ) );
+	m_deviceContext->Unmap( vertexBuffer_, 0u );
+	m_deviceContext->IASetVertexBuffers( 0, 1, &vertexBuffer_, &stride_, &offset_ );
+	m_deviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_LINELIST );
+
+	m_deviceContext->Draw( numVertices_, 0u );
+
+	vertexBuffer_->Release();
+}
 void GraphicsSystem::DrawFrame( void )
 {
 	m_deviceContext->ClearRenderTargetView( m_defaultPipeline.m_renderTargetView, RGBAColor::Black.m_channels );
@@ -562,6 +609,7 @@ void GraphicsSystem::DrawFrame( void )
 	if ( m_debugRendererEnabled )
 		DrawDebugGraphics();
 	m_DEBUG_LINES_numVertices = 0u;
+	DrawGroundLines();
 	DrawMeshes();
 
 	g_hResult = m_swapChain->Present( 1u, 0u );
