@@ -9,6 +9,11 @@ extern HWND g_hWnd;
 extern const int g_windowWidth;
 extern const int g_windowHeight;
 
+const DirectX::XMFLOAT4X4 GraphicsSystem::IDENTITY = DirectX::XMFLOAT4X4( 1.0f, 0.0f, 0.0f, 0.0f,
+																		  0.0f, 1.0f, 0.0f, 0.0f,
+																		  0.0f, 0.0f, 1.0f, 0.0f,
+																		  0.0f, 0.0f, 0.0f, 1.0f );
+
 struct HRESULT2
 {
 	HRESULT2( void )
@@ -82,7 +87,7 @@ void Camera::RotateCamera( float _x, float _y )
 }
 DirectX::XMMATRIX Camera::GetViewMatrix( void ) const
 {
-	return XMMatrixInverse( nullptr, XMLoadFloat4x4( &m_cameraTransform ) );
+	return XMMatrixTranspose( XMMatrixInverse( nullptr, XMLoadFloat4x4( &m_cameraTransform ) ) );
 }
 void Camera::Update( float _dt )
 {
@@ -93,7 +98,6 @@ void Camera::Update( float _dt )
 	{
 		POINT p_;
 		GetCursorPos( &p_ );
-		//ScreenToClient( g_hWnd, &p_ );
 		currMousePos_.x = ( float )p_.x;
 		currMousePos_.y = ( float )p_.y;
 	}
@@ -243,13 +247,15 @@ void TriangleMesh::Clear( void )
 {
 	m_numTriangles = 0u;
 }
-void GraphicsSystem::AddMesh( const TriangleMesh* _mesh )
+void GraphicsSystem::AddMesh( const TriangleMesh* _mesh, const DirectX::XMFLOAT4X4& _world )
 {
 	m_meshes.push_back( _mesh );
+	m_worldMatrices.push_back( _world );
 }
 void GraphicsSystem::ClearMeshes( void )
 {
 	m_meshes.clear();
+	m_worldMatrices.clear();
 }
 void GraphicsSystem::AddDebugLine( const PositionColorVertex& _a, const PositionColorVertex& _b )
 {
@@ -288,8 +294,63 @@ void GraphicsSystem::DrawDebugGraphics( void )
 
 	m_deviceContext->Draw( m_DEBUG_LINES_numVertices, 0u );
 
-	m_DEBUG_LINES_numVertices = 0u;
 	vertexBuffer_->Release();
+}
+void GraphicsSystem::DrawMeshes( void )
+{
+	const unsigned int size_ = ( unsigned int )m_meshes.size();
+	if ( 0u != size_ )
+		for ( unsigned int i = 0u; i < size_; ++i )
+			DrawMesh( *( m_meshes[ i ] ), m_worldMatrices[ i ] );
+	else
+	{
+		static const UINT stride_ = sizeof( PositionColorVertex );
+		static const UINT offset_ = 0u;
+		ID3D11DeviceContext& deviceContext_ = *m_deviceContext;
+		deviceContext_.IASetVertexBuffers( 0, 1, &m_defaultVertexBuffer, &stride_, &offset_ );
+		deviceContext_.IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+		deviceContext_.Draw( m_defaultVertexCount, 0u );
+	}
+}
+void GraphicsSystem::SetMvpBuffer( void )
+{
+	m_modelViewProjection.m_model = IDENTITY;
+	DirectX::XMStoreFloat4x4( &m_modelViewProjection.m_view, m_mainCamera.GetViewMatrix() );
+
+	m_deviceContext->UpdateSubresource( m_modelViewProjectionBuffer, 0u, nullptr, &m_modelViewProjection, 0u, 0u );
+	m_deviceContext->VSSetConstantBuffers( 0u, 1u, &m_modelViewProjectionBuffer );
+}
+void GraphicsSystem::DrawMesh( const TriangleMesh& _mesh, const DirectX::XMFLOAT4X4& _world )
+{
+	const unsigned int numTriangles_ = _mesh.m_numTriangles;
+	const unsigned int numVertices_ = numTriangles_ * 3u;
+	PositionColorVertex* vertices_ = new PositionColorVertex[ numVertices_ ];
+	unsigned int i, j;
+	for ( i = 0u; i < numTriangles_; ++i )
+		for ( j = 0u; j < 3u; ++j )
+			vertices_[ i * 3u + j ] = _mesh.m_triangles[ i ].m_vertices[ j ];
+	ID3D11Buffer* vertexBuffer_;
+	D3D11_BUFFER_DESC bufferDesc_;
+	ZEROSTRUCT( bufferDesc_ );
+	D3D11_MAPPED_SUBRESOURCE mappedResource_;
+	bufferDesc_.Usage = D3D11_USAGE_DYNAMIC;
+	bufferDesc_.ByteWidth = sizeof( PositionColorVertex ) * numVertices_;
+	bufferDesc_.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bufferDesc_.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	g_hResult = m_device->CreateBuffer( &bufferDesc_, nullptr, &vertexBuffer_ );
+	g_hResult = m_deviceContext->Map( vertexBuffer_, 0u, D3D11_MAP_WRITE_DISCARD, 0u, &mappedResource_ );
+	memcpy( mappedResource_.pData, vertices_, sizeof( PositionColorVertex ) * numVertices_ );
+	m_deviceContext->Unmap( vertexBuffer_, 0u );
+	static const UINT stride_ = sizeof( PositionColorVertex );
+	static const UINT offset_ = 0u;
+	m_deviceContext->IASetVertexBuffers( 0, 1, &vertexBuffer_, &stride_, &offset_ );
+	m_deviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+	m_modelViewProjection.m_model = _world;
+	m_deviceContext->UpdateSubresource( m_modelViewProjectionBuffer, 0u, nullptr, &m_modelViewProjection, 0u, 0u );
+	m_deviceContext->VSSetConstantBuffers( 0u, 1u, &m_modelViewProjectionBuffer );
+	m_deviceContext->Draw( numVertices_, 0u );
+	vertexBuffer_->Release();
+	delete[ ] vertices_;
 }
 GraphicsSystem::GraphicsSystem( void ) :
 	m_debugRendererEnabled( true ),
@@ -332,7 +393,7 @@ void GraphicsSystem::SetupDefaultBuffer( void )
 		PositionColorVertex( -1.0f, -1.0f, 0.5f, RGBAColor::Green ),
 		PositionColorVertex( 1.0f, -1.0f, 0.5f, RGBAColor::Blue )
 	};
-	m_vertexCount = 3u;
+	m_defaultVertexCount = 3u;
 
 	D3D11_BUFFER_DESC bufferDesc_;
 	ZEROSTRUCT( bufferDesc_ );
@@ -347,6 +408,16 @@ void GraphicsSystem::SetupDefaultBuffer( void )
 	memcpy( mappedResource_.pData, triangle_, sizeof( triangle_ ) );
 	m_deviceContext->Unmap( m_defaultVertexBuffer, 0u );
 }
+void GraphicsSystem::InitializeMvpBuffer( void )
+{
+	static const CD3D11_BUFFER_DESC mvpBufferDesc_( sizeof( ModelViewProjection ), D3D11_BIND_CONSTANT_BUFFER );
+	g_hResult = m_device->CreateBuffer( &mvpBufferDesc_, nullptr, &m_modelViewProjectionBuffer );
+	static const float aspect_ = ( float )g_windowWidth / ( float )g_windowHeight;
+	static const float fov_ = DirectX::XMConvertToRadians( 70.0f );
+	static const float near_ = 0.01f;
+	static const float far_ = 100.0f;
+	XMStoreFloat4x4( &m_modelViewProjection.m_projection, XMMatrixTranspose( DirectX::XMMatrixPerspectiveFovLH( fov_, aspect_, near_, far_ ) ) );
+}
 void GraphicsSystem::InitializeGraphicsSystem( void )
 {
 	InitializeDeviceContextChain();
@@ -356,6 +427,7 @@ void GraphicsSystem::InitializeGraphicsSystem( void )
 	InitializeRasterizerState();
 	InitializeViewport();
 	InitializeShadersAndInputLayout();
+	InitializeMvpBuffer();
 	SetupDefaultBuffer();
 	SetPipelineStages( &m_defaultPipeline );
 	m_deviceContext->RSSetViewports( 1u, &m_viewport );
@@ -447,7 +519,7 @@ void GraphicsSystem::InitializeRasterizerState( void )
 	rasterizerDesc_.DepthBias = 0;
 	rasterizerDesc_.DepthBiasClamp = 0.0f;
 	rasterizerDesc_.DepthClipEnable = TRUE;
-	rasterizerDesc_.FillMode = D3D11_FILL_SOLID;
+	rasterizerDesc_.FillMode = D3D11_FILL_WIREFRAME;
 	rasterizerDesc_.FrontCounterClockwise = TRUE;
 	rasterizerDesc_.MultisampleEnable = FALSE;
 	rasterizerDesc_.ScissorEnable = FALSE;
@@ -484,19 +556,14 @@ void GraphicsSystem::InitializeShadersAndInputLayout( void )
 }
 void GraphicsSystem::DrawFrame( void )
 {
-	static const UINT stride_ = sizeof( PositionColorVertex );
-	static const UINT offset_ = 0u;
-	ID3D11DeviceContext& deviceContext_ = *m_deviceContext;
-
-	deviceContext_.ClearRenderTargetView( m_defaultPipeline.m_renderTargetView, RGBAColor::Black.m_channels );
-	deviceContext_.ClearDepthStencilView( m_defaultPipeline.m_depthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0ui8 );
-	deviceContext_.IASetVertexBuffers( 0, 1, &m_defaultVertexBuffer, &stride_, &offset_ );
-	deviceContext_.IASetPrimitiveTopology( D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
-	deviceContext_.Draw( m_vertexCount, 0u );
+	m_deviceContext->ClearRenderTargetView( m_defaultPipeline.m_renderTargetView, RGBAColor::Black.m_channels );
+	m_deviceContext->ClearDepthStencilView( m_defaultPipeline.m_depthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0ui8 );
+	SetMvpBuffer();
 	if ( m_debugRendererEnabled )
 		DrawDebugGraphics();
-	else
-		m_DEBUG_LINES_numVertices = 0u;
+	m_DEBUG_LINES_numVertices = 0u;
+	DrawMeshes();
+
 	g_hResult = m_swapChain->Present( 1u, 0u );
 }
 void GraphicsSystem::ReleaseAll( void )

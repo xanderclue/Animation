@@ -88,6 +88,7 @@ struct Triangle
 
 class TriangleMesh
 {
+	friend class GraphicsSystem;
 private:
 	Triangle* m_triangles;
 	unsigned int m_numTriangles, m_arrSize;
@@ -113,9 +114,11 @@ private:
 	IDXGISwapChain* m_swapChain = nullptr;
 	ID3D11Buffer* m_defaultVertexBuffer = nullptr;
 	D3D11_VIEWPORT m_viewport;
-	UINT m_vertexCount = 0u;
+	UINT m_defaultVertexCount = 0u;
 	ID3D11Buffer* m_modelViewProjectionBuffer = nullptr;
+	ModelViewProjection m_modelViewProjection;
 	std::vector<const TriangleMesh*> m_meshes;
+	std::vector<DirectX::XMFLOAT4X4> m_worldMatrices;
 
 	bool m_debugRendererEnabled;
 	unsigned int m_DEBUG_LINES_numVertices;
@@ -131,13 +134,19 @@ private:
 	void InitializeDepthStencilView( void );
 	void InitializeRasterizerState( void );
 	void InitializeShadersAndInputLayout( void );
+	void InitializeMvpBuffer( void );
 	void DrawDebugGraphics( void );
+	void DrawMeshes( void );
+	void DrawMesh( const TriangleMesh&, const DirectX::XMFLOAT4X4& );
+	void SetMvpBuffer( void );
 
 public:
+	static const DirectX::XMFLOAT4X4 IDENTITY;
+
 	GraphicsSystem( void );
 	~GraphicsSystem( void );
 	void InitializeGraphicsSystem( void );
-	void AddMesh( const TriangleMesh* );
+	void AddMesh( const TriangleMesh*, const DirectX::XMFLOAT4X4& = IDENTITY );
 	void ClearMeshes( void );
 	void DrawFrame( void );
 	void ReleaseAll( void );
