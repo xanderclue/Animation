@@ -170,6 +170,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders.shader" />
+    <None Include="Teddy_Idle.fbx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FBXDLL\FBXDLL.vcxproj">
