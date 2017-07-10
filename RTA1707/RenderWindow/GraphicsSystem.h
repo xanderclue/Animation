@@ -143,12 +143,12 @@ private:
 	void SetMvpBuffer( void );
 
 public:
-	static const DirectX::XMFLOAT4X4 IDENTITY;
+	static const DirectX::XMFLOAT4X4 IDENTITYMATRIX;
 
 	GraphicsSystem( void );
 	~GraphicsSystem( void );
 	void InitializeGraphicsSystem( void );
-	void AddMesh( const TriangleMesh*, const DirectX::XMFLOAT4X4& = IDENTITY );
+	void AddMesh( const TriangleMesh*, const DirectX::XMFLOAT4X4& = IDENTITYMATRIX );
 	void ClearMeshes( void );
 	void DrawFrame( void );
 	void ReleaseAll( void );

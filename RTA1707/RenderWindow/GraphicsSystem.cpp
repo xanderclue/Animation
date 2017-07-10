@@ -9,10 +9,10 @@ extern HWND g_hWnd;
 extern const int g_windowWidth;
 extern const int g_windowHeight;
 
-const DirectX::XMFLOAT4X4 GraphicsSystem::IDENTITY = DirectX::XMFLOAT4X4( 1.0f, 0.0f, 0.0f, 0.0f,
-																		  0.0f, 1.0f, 0.0f, 0.0f,
-																		  0.0f, 0.0f, 1.0f, 0.0f,
-																		  0.0f, 0.0f, 0.0f, 1.0f );
+const DirectX::XMFLOAT4X4 GraphicsSystem::IDENTITYMATRIX = DirectX::XMFLOAT4X4( 1.0f, 0.0f, 0.0f, 0.0f,
+																				0.0f, 1.0f, 0.0f, 0.0f,
+																				0.0f, 0.0f, 1.0f, 0.0f,
+																				0.0f, 0.0f, 0.0f, 1.0f );
 
 struct HRESULT2
 {
@@ -321,7 +321,7 @@ void GraphicsSystem::DrawMeshes( void )
 }
 void GraphicsSystem::SetMvpBuffer( void )
 {
-	m_modelViewProjection.m_model = IDENTITY;
+	m_modelViewProjection.m_model = IDENTITYMATRIX;
 	DirectX::XMStoreFloat4x4( &m_modelViewProjection.m_view, m_mainCamera.GetViewMatrix() );
 
 	m_deviceContext->UpdateSubresource( m_modelViewProjectionBuffer, 0u, nullptr, &m_modelViewProjection, 0u, 0u );

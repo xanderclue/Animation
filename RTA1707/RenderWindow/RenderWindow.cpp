@@ -8,8 +8,8 @@
 #define MAX_LOADSTRING 100
 
 HINSTANCE g_hInst;
-WCHAR szTitle[ MAX_LOADSTRING ];
-WCHAR szWindowClass[ MAX_LOADSTRING ];
+WCHAR g_szTitle[ MAX_LOADSTRING ];
+WCHAR g_szWindowClass[ MAX_LOADSTRING ];
 HWND g_hWnd;
 GraphicsSystem g_graphicsSystem;
 extern const int g_windowWidth = 1000;
@@ -20,41 +20,38 @@ BOOL InitInstance( HINSTANCE, int );
 LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
 INT_PTR CALLBACK About( HWND, UINT, WPARAM, LPARAM );
 
-TriangleMesh PositionTrianglesToMesh( const std::vector<PositionTriangle>&, const RGBAColor& = RGBAColor::White );
+TriangleMesh PositionTrianglesToMesh( const std::vector<PositionTriangle>&, const RGBAColor& = RGBAColor( 0.2f, 0.2f, 0.2f, 1.0f ) );
+void DrawSkeleton( const std::vector<JointTransform>&, const DirectX::XMFLOAT4X4& = GraphicsSystem::IDENTITYMATRIX );
 
-int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
-					   _In_ LPWSTR lpCmdLine, _In_ int nCmdShow )
+int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int _nCmdShow )
 {
-	UNREFERENCED_PARAMETER( hPrevInstance );
-	UNREFERENCED_PARAMETER( lpCmdLine );
+	LoadStringW( _hInstance, IDS_APP_TITLE, g_szTitle, MAX_LOADSTRING );
+	LoadStringW( _hInstance, IDC_RENDERWINDOW, g_szWindowClass, MAX_LOADSTRING );
+	MyRegisterClass( _hInstance );
 
-	LoadStringW( hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING );
-	LoadStringW( hInstance, IDC_RENDERWINDOW, szWindowClass, MAX_LOADSTRING );
-	MyRegisterClass( hInstance );
-
-	if ( !InitInstance( hInstance, nCmdShow ) )
+	if ( !InitInstance( _hInstance, _nCmdShow ) )
 	{
 		return FALSE;
 	}
 #ifndef NDEBUG
 	AllocConsole();
 	{
-		FILE* new_std_in_out;
-		freopen_s( &new_std_in_out, "CONOUT$", "w", stdout );
-		freopen_s( &new_std_in_out, "CONIN$", "r", stdin );
+		FILE* new_std_in_out_;
+		freopen_s( &new_std_in_out_, "CONOUT$", "w", stdout );
+		freopen_s( &new_std_in_out_, "CONIN$", "r", stdin );
 	}
 	FBXDLL::TestFBX_PrintInfo( "Teddy_Idle.fbx" );
 #endif
-	HACCEL hAccelTable = LoadAccelerators( hInstance, MAKEINTRESOURCE( IDC_RENDERWINDOW ) );
+	HACCEL hAccelTable_ = LoadAccelerators( _hInstance, MAKEINTRESOURCE( IDC_RENDERWINDOW ) );
 	MSG msg_;
 	ZEROSTRUCT( msg_ );
 
-	DirectX::XMFLOAT4X4 teddyWorldMatrix_ = GraphicsSystem::IDENTITY;
+	DirectX::XMFLOAT4X4 teddyWorldMatrix_ = GraphicsSystem::IDENTITYMATRIX;
 	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixScaling( 0.03f, 0.03f, 0.03f ) ) );
 	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) ) ) );
 	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixTranslation( 3.0f, 0.0f, 0.0f ) ) );
 
-	DirectX::XMFLOAT4X4 mageWorldMatrix_ = GraphicsSystem::IDENTITY;
+	DirectX::XMFLOAT4X4 mageWorldMatrix_ = GraphicsSystem::IDENTITYMATRIX;
 	XMStoreFloat4x4( &mageWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &mageWorldMatrix_ ), DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) ) ) );
 	XMStoreFloat4x4( &mageWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &mageWorldMatrix_ ), DirectX::XMMatrixTranslation( -3.0f, 0.0f, 0.0f ) ) );
 
@@ -64,6 +61,10 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Teddy_Idle.fbx" ) );
 	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ );
 	g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ );
+
+	std::vector<JointTransform> jointsTeddy_ = FBXDLL::FBX_GetJoints( "Teddy_Idle.fbx" );
+	std::vector<JointTransform> jointsMage_ = FBXDLL::FBX_GetJoints( "Mage_Idle.fbx" );
+
 	long long t2_ = std::chrono::system_clock::now().time_since_epoch().count(), t1_;
 	while ( WM_QUIT != msg_.message )
 	{
@@ -80,10 +81,12 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 		t1_ = t2_;
 		t2_ = std::chrono::system_clock::now().time_since_epoch().count();
 		g_graphicsSystem.GetCamera().Update( ( t2_ - t1_ ) * 0.0000001f );
+		DrawSkeleton( jointsTeddy_, teddyWorldMatrix_ );
+		DrawSkeleton( jointsMage_, mageWorldMatrix_ );
 		g_graphicsSystem.DrawFrame();
 		if ( PeekMessage( &msg_, nullptr, 0, 0, PM_REMOVE ) )
 		{
-			if ( !TranslateAccelerator( msg_.hwnd, hAccelTable, &msg_ ) )
+			if ( !TranslateAccelerator( msg_.hwnd, hAccelTable_, &msg_ ) )
 			{
 				TranslateMessage( &msg_ );
 				DispatchMessage( &msg_ );
@@ -98,56 +101,54 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	return ( int )msg_.wParam;
 }
 
-ATOM MyRegisterClass( HINSTANCE hInstance )
+ATOM MyRegisterClass( HINSTANCE _hInstance )
 {
-	WNDCLASSEXW wcex;
+	WNDCLASSEXW wcex_;
 
-	wcex.cbSize = sizeof( WNDCLASSEX );
+	wcex_.cbSize = sizeof( WNDCLASSEX );
 
-	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = WndProc;
-	wcex.cbClsExtra = 0;
-	wcex.cbWndExtra = 0;
-	wcex.hInstance = hInstance;
-	wcex.hIcon = LoadIcon( hInstance, MAKEINTRESOURCE( IDI_RENDERWINDOW ) );
-	wcex.hCursor = LoadCursor( nullptr, IDC_ARROW );
-	wcex.hbrBackground = ( HBRUSH )( COLOR_WINDOW + 1 );
-	wcex.lpszMenuName = nullptr;
-	wcex.lpszClassName = szWindowClass;
-	wcex.hIconSm = LoadIcon( wcex.hInstance, MAKEINTRESOURCE( IDI_SMALL ) );
+	wcex_.style = CS_HREDRAW | CS_VREDRAW;
+	wcex_.lpfnWndProc = WndProc;
+	wcex_.cbClsExtra = 0;
+	wcex_.cbWndExtra = 0;
+	wcex_.hInstance = _hInstance;
+	wcex_.hIcon = LoadIcon( _hInstance, MAKEINTRESOURCE( IDI_RENDERWINDOW ) );
+	wcex_.hCursor = LoadCursor( nullptr, IDC_ARROW );
+	wcex_.hbrBackground = ( HBRUSH )( COLOR_WINDOW + 1 );
+	wcex_.lpszMenuName = nullptr;
+	wcex_.lpszClassName = g_szWindowClass;
+	wcex_.hIconSm = LoadIcon( wcex_.hInstance, MAKEINTRESOURCE( IDI_SMALL ) );
 
-	return RegisterClassExW( &wcex );
+	return RegisterClassExW( &wcex_ );
 }
 
-BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
+BOOL InitInstance( HINSTANCE _hInstance, int _nCmdShow )
 {
-	g_hInst = hInstance;
+	g_hInst = _hInstance;
 
-	g_hWnd = CreateWindowW( szWindowClass, szTitle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX,
-							CW_USEDEFAULT, 0, g_windowWidth, g_windowHeight, nullptr, nullptr, hInstance, nullptr );
+	g_hWnd = CreateWindowW( g_szWindowClass, g_szTitle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX,
+							CW_USEDEFAULT, 0, g_windowWidth, g_windowHeight, nullptr, nullptr, _hInstance, nullptr );
 
 	if ( !g_hWnd )
-	{
 		return FALSE;
-	}
 
-	ShowWindow( g_hWnd, nCmdShow );
+	ShowWindow( g_hWnd, _nCmdShow );
 	UpdateWindow( g_hWnd );
 
 	return TRUE;
 }
 
-LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
+LRESULT CALLBACK WndProc( HWND _hWnd, UINT _message, WPARAM _wParam, LPARAM _lParam )
 {
-	switch ( message )
+	switch ( _message )
 	{
 		case WM_DESTROY:
 			PostQuitMessage( 0 );
 			break;
 		default:
-			return DefWindowProc( hWnd, message, wParam, lParam );
+			return DefWindowProc( _hWnd, _message, _wParam, _lParam );
 	}
-	return 0;
+	return 0ll;
 }
 
 TriangleMesh PositionTrianglesToMesh( const std::vector<PositionTriangle>& _triangles, const RGBAColor& _color )
@@ -162,16 +163,69 @@ TriangleMesh PositionTrianglesToMesh( const std::vector<PositionTriangle>& _tria
 		tempTriangle_.m_vertexC.m_position.w = 1.0f;
 	for ( unsigned int i = 0u; i < _triangles.size(); ++i )
 	{
-		tempTriangle_.m_vertexA.m_position.x = _triangles[ i ].a.x;
-		tempTriangle_.m_vertexA.m_position.y = _triangles[ i ].a.y;
-		tempTriangle_.m_vertexA.m_position.z = _triangles[ i ].a.z;
-		tempTriangle_.m_vertexB.m_position.x = _triangles[ i ].b.x;
-		tempTriangle_.m_vertexB.m_position.y = _triangles[ i ].b.y;
-		tempTriangle_.m_vertexB.m_position.z = _triangles[ i ].b.z;
-		tempTriangle_.m_vertexC.m_position.x = _triangles[ i ].c.x;
-		tempTriangle_.m_vertexC.m_position.y = _triangles[ i ].c.y;
-		tempTriangle_.m_vertexC.m_position.z = _triangles[ i ].c.z;
+		tempTriangle_.m_vertexA.m_position.x = _triangles[ i ].m_posA.x;
+		tempTriangle_.m_vertexA.m_position.y = _triangles[ i ].m_posA.y;
+		tempTriangle_.m_vertexA.m_position.z = _triangles[ i ].m_posA.z;
+		tempTriangle_.m_vertexB.m_position.x = _triangles[ i ].m_posB.x;
+		tempTriangle_.m_vertexB.m_position.y = _triangles[ i ].m_posB.y;
+		tempTriangle_.m_vertexB.m_position.z = _triangles[ i ].m_posB.z;
+		tempTriangle_.m_vertexC.m_position.x = _triangles[ i ].m_posC.x;
+		tempTriangle_.m_vertexC.m_position.y = _triangles[ i ].m_posC.y;
+		tempTriangle_.m_vertexC.m_position.z = _triangles[ i ].m_posC.z;
 		outMesh_.AddTriangle( tempTriangle_ );
 	}
 	return outMesh_;
+}
+
+void DrawJoint( DirectX::XMFLOAT4X4 _transformationMatrix, const DirectX::XMFLOAT4X4& _worldMatrix )
+{
+	XMStoreFloat4x4( &_transformationMatrix, XMMatrixMultiply( XMLoadFloat4x4( &_transformationMatrix ), XMLoadFloat4x4( &_worldMatrix ) ) );
+	PositionColorVertex xAxis_, yAxis_, zAxis_, position_;
+	xAxis_.m_position = DirectX::XMFLOAT4(
+		_transformationMatrix._11,
+		_transformationMatrix._12,
+		_transformationMatrix._13,
+		_transformationMatrix._14 );
+	yAxis_.m_position = DirectX::XMFLOAT4(
+		_transformationMatrix._21,
+		_transformationMatrix._22,
+		_transformationMatrix._23,
+		_transformationMatrix._24 );
+	zAxis_.m_position = DirectX::XMFLOAT4(
+		_transformationMatrix._31,
+		_transformationMatrix._32,
+		_transformationMatrix._33,
+		_transformationMatrix._34 );
+	position_.m_position = DirectX::XMFLOAT4(
+		_transformationMatrix._41,
+		_transformationMatrix._42,
+		_transformationMatrix._43,
+		_transformationMatrix._44 );
+	XMStoreFloat4( &xAxis_.m_position, DirectX::XMVectorAdd( XMLoadFloat4( &position_.m_position ), XMLoadFloat4( &xAxis_.m_position ) ) );
+	XMStoreFloat4( &yAxis_.m_position, DirectX::XMVectorAdd( XMLoadFloat4( &position_.m_position ), XMLoadFloat4( &yAxis_.m_position ) ) );
+	XMStoreFloat4( &zAxis_.m_position, DirectX::XMVectorAdd( XMLoadFloat4( &position_.m_position ), XMLoadFloat4( &zAxis_.m_position ) ) );
+
+	position_.m_color = xAxis_.m_color = RGBAColor::Red.m_rgba;
+	g_graphicsSystem.AddDebugLine( position_, xAxis_ );
+	position_.m_color = yAxis_.m_color = RGBAColor::Green.m_rgba;
+	g_graphicsSystem.AddDebugLine( position_, yAxis_ );
+	position_.m_color = zAxis_.m_color = RGBAColor::Blue.m_rgba;
+	g_graphicsSystem.AddDebugLine( position_, zAxis_ );
+}
+void DrawBone( DirectX::XMFLOAT4X4 _transformA, DirectX::XMFLOAT4X4 _transformB, const DirectX::XMFLOAT4X4& _worldMatrix )
+{
+	XMStoreFloat4x4( &_transformA, XMMatrixMultiply( XMLoadFloat4x4( &_transformA ), XMLoadFloat4x4( &_worldMatrix ) ) );
+	XMStoreFloat4x4( &_transformB, XMMatrixMultiply( XMLoadFloat4x4( &_transformB ), XMLoadFloat4x4( &_worldMatrix ) ) );
+	g_graphicsSystem.AddDebugLine( PositionColorVertex( _transformA._41, _transformA._42, _transformA._43, RGBAColor::Cyan ),
+								   PositionColorVertex( _transformB._41, _transformB._42, _transformB._43, RGBAColor::Cyan ) );
+}
+void DrawSkeleton( const std::vector<JointTransform>& _joints, const DirectX::XMFLOAT4X4& _worldMatrix )
+{
+	const unsigned int size_ = _joints.size();
+	for ( unsigned int i = 0u; i < size_; ++i )
+	{
+		DrawJoint( _joints[ i ].m_transform, _worldMatrix );
+		if ( _joints[ i ].m_parent >= 0 )
+			DrawBone( _joints[ i ].m_transform, _joints[ _joints[ i ].m_parent ].m_transform, _worldMatrix );
+	}
 }
