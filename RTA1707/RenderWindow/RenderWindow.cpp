@@ -40,7 +40,7 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 		freopen_s( &new_std_in_out_, "CONOUT$", "w", stdout );
 		freopen_s( &new_std_in_out_, "CONIN$", "r", stdin );
 	}
-	FBXDLL::TestFBX_PrintInfo( "Teddy_Idle.fbx" );
+	FBXDLL::TestFBX_PrintInfo( "Teddy_Run.fbx" );
 #endif
 	HACCEL hAccelTable_ = LoadAccelerators( _hInstance, MAKEINTRESOURCE( IDC_RENDERWINDOW ) );
 	MSG msg_;
@@ -55,16 +55,32 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 	XMStoreFloat4x4( &mageWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &mageWorldMatrix_ ), DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) ) ) );
 	XMStoreFloat4x4( &mageWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &mageWorldMatrix_ ), DirectX::XMMatrixTranslation( -3.0f, 0.0f, 0.0f ) ) );
 
+#ifndef NDEBUG
+	std::cout << "Init Graphics System...";
+	g_graphicsSystem.InitializeGraphicsSystem(); std::cout << " Done\n";
+	std::cout << "Reading Teddy_Run.fbx (Mesh)...";
+	TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Teddy_Run.fbx" ) ); std::cout << " Done\n";
+	std::cout << "Adding Mesh Teddy_Run...";
+	g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ ); std::cout << " Done\n";
+	std::cout << "Reading Teddy_Run.fbx (Skeleton)...";
+	std::vector<JointTransform> jointsTeddy_ = FBXDLL::FBX_GetJoints( "Teddy_Run.fbx" ); std::cout << " Done\n";
+	std::cout << "Reading Mage_Run.fbx (Mesh)...";
+	TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Mage_Run.fbx" ) ); std::cout << " Done\n";
+	std::cout << "Adding Mesh Mage_Run...";
+	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ ); std::cout << " Done\n";
+	std::cout << "Reading Mage_Run.fbx (Skeleton)...";
+	std::vector<JointTransform> jointsMage_ = FBXDLL::FBX_GetJoints( "Mage_Run.fbx" ); std::cout << " Done\n";
+#else
 	g_graphicsSystem.InitializeGraphicsSystem();
-	g_graphicsSystem.EnableDebugGraphics( true );
-	TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Mage_Idle.fbx" ) );
-	TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Teddy_Idle.fbx" ) );
+	TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Mage_Run.fbx" ) );
+	TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Teddy_Run.fbx" ) );
+	std::vector<JointTransform> jointsTeddy_ = FBXDLL::FBX_GetJoints( "Teddy_Run.fbx" );
+	std::vector<JointTransform> jointsMage_ = FBXDLL::FBX_GetJoints( "Mage_Run.fbx" );
 	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ );
 	g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ );
+#endif
 
-	std::vector<JointTransform> jointsTeddy_ = FBXDLL::FBX_GetJoints( "Teddy_Idle.fbx" );
-	std::vector<JointTransform> jointsMage_ = FBXDLL::FBX_GetJoints( "Mage_Idle.fbx" );
-
+	g_graphicsSystem.EnableDebugGraphics( true );
 	long long t2_ = std::chrono::system_clock::now().time_since_epoch().count(), t1_;
 	while ( WM_QUIT != msg_.message )
 	{
@@ -221,7 +237,7 @@ void DrawBone( DirectX::XMFLOAT4X4 _transformA, DirectX::XMFLOAT4X4 _transformB,
 }
 void DrawSkeleton( const std::vector<JointTransform>& _joints, const DirectX::XMFLOAT4X4& _worldMatrix )
 {
-	const unsigned int size_ = _joints.size();
+	const unsigned int size_ = ( unsigned int )_joints.size();
 	for ( unsigned int i = 0u; i < size_; ++i )
 	{
 		DrawJoint( _joints[ i ].m_transform, _worldMatrix );
