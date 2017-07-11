@@ -22,6 +22,7 @@ INT_PTR CALLBACK About( HWND, UINT, WPARAM, LPARAM );
 
 TriangleMesh PositionTrianglesToMesh( const std::vector<PositionTriangle>&, const RGBAColor& = RGBAColor( 0.2f, 0.2f, 0.2f, 1.0f ) );
 void DrawSkeleton( const std::vector<JointTransform>&, const DirectX::XMFLOAT4X4& = GraphicsSystem::IDENTITYMATRIX );
+void DrawSkeletonAnimation( const AnimClip&, const DirectX::XMFLOAT4X4& = GraphicsSystem::IDENTITYMATRIX, double = 0.0 );
 
 int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int _nCmdShow )
 {
@@ -59,46 +60,46 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 	std::cout << "Init Graphics System...";
 	g_graphicsSystem.InitializeGraphicsSystem(); std::cout << " Done\n";
 	std::cout << "Reading Teddy_Run.fbx (Mesh)...";
-	TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Teddy_Run.fbx" ) ); std::cout << " Done\n";
-	std::cout << "Adding Mesh Teddy_Run...";
-	g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ ); std::cout << " Done\n";
+	TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMeshBindPose( "Teddy_Run.fbx" ) ); std::cout << " Done\n";
+	//std::cout << "Adding Mesh Teddy_Run...";
+	//g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ ); std::cout << " Done\n";
 	std::cout << "Reading Teddy_Run.fbx (Skeleton)...";
-	std::vector<JointTransform> jointsTeddy_ = FBXDLL::FBX_GetJoints( "Teddy_Run.fbx" ); std::cout << " Done\n";
+	std::vector<JointTransform> jointsTeddy_ = FBXDLL::FBX_GetJointsBindPose( "Teddy_Run.fbx" ); std::cout << " Done\n";
 	std::cout << "Reading Mage_Run.fbx (Mesh)...";
-	TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Mage_Run.fbx" ) ); std::cout << " Done\n";
-	std::cout << "Adding Mesh Mage_Run...";
-	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ ); std::cout << " Done\n";
+	TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMeshBindPose( "Mage_Run.fbx" ) ); std::cout << " Done\n";
+	//std::cout << "Adding Mesh Mage_Run...";
+	//g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ ); std::cout << " Done\n";
 	std::cout << "Reading Mage_Run.fbx (Skeleton)...";
-	std::vector<JointTransform> jointsMage_ = FBXDLL::FBX_GetJoints( "Mage_Run.fbx" ); std::cout << " Done\n";
+	std::vector<JointTransform> jointsMage_ = FBXDLL::FBX_GetJointsBindPose( "Mage_Run.fbx" ); std::cout << " Done\n";
+	std::cout << "Reading Teddy_Run.fbx (Animation)...";
+	AnimClip animTeddy_ = FBXDLL::FBX_GetAnimationData( "Teddy_Run.fbx" ); std::cout << " Done\n";
+	std::cout << "Reading Mage_Run.fbx (Animation)...";
+	AnimClip animMage_ = FBXDLL::FBX_GetAnimationData( "Mage_Run.fbx" ); std::cout << " Done\n";
 #else
 	g_graphicsSystem.InitializeGraphicsSystem();
-	TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Mage_Run.fbx" ) );
-	TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetBindPoseMesh( "Teddy_Run.fbx" ) );
-	std::vector<JointTransform> jointsTeddy_ = FBXDLL::FBX_GetJoints( "Teddy_Run.fbx" );
-	std::vector<JointTransform> jointsMage_ = FBXDLL::FBX_GetJoints( "Mage_Run.fbx" );
-	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ );
-	g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ );
+	TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMeshBindPose( "Mage_Run.fbx" ) );
+	TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMeshBindPose( "Teddy_Run.fbx" ) );
+	std::vector<JointTransform> jointsTeddy_ = FBXDLL::FBX_GetJointsBindPose( "Teddy_Run.fbx" );
+	std::vector<JointTransform> jointsMage_ = FBXDLL::FBX_GetJointsBindPose( "Mage_Run.fbx" );
+	//g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ );
+	//g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ );
+	AnimClip animTeddy_ = FBXDLL::FBX_GetAnimationData( "Teddy_Run.fbx" );
+	AnimClip animMage_ = FBXDLL::FBX_GetAnimationData( "Mage_Run.fbx" );
 #endif
 
 	g_graphicsSystem.EnableDebugGraphics( true );
 	long long t2_ = std::chrono::system_clock::now().time_since_epoch().count(), t1_;
+	double time_ = 0.0;
 	while ( WM_QUIT != msg_.message )
 	{
-		static bool wireframeKeyPressed_ = true;
-		if ( GetAsyncKeyState( 'T' ) )
-		{
-			if ( !wireframeKeyPressed_ )
-			{
-				g_graphicsSystem.ToggleWireframe();
-				wireframeKeyPressed_ = true;
-			}
-		}
-		else wireframeKeyPressed_ = false;
 		t1_ = t2_;
 		t2_ = std::chrono::system_clock::now().time_since_epoch().count();
 		g_graphicsSystem.GetCamera().Update( ( t2_ - t1_ ) * 0.0000001f );
-		DrawSkeleton( jointsTeddy_, teddyWorldMatrix_ );
-		DrawSkeleton( jointsMage_, mageWorldMatrix_ );
+		//DrawSkeleton( jointsTeddy_, teddyWorldMatrix_ );
+		//DrawSkeleton( jointsMage_, mageWorldMatrix_ );
+		time_ += ( t2_ - t1_ ) * 0.0000001;
+		DrawSkeletonAnimation( animTeddy_, teddyWorldMatrix_, time_ );
+		DrawSkeletonAnimation( animMage_, mageWorldMatrix_, time_ );
 		g_graphicsSystem.DrawFrame();
 		if ( PeekMessage( &msg_, nullptr, 0, 0, PM_REMOVE ) )
 		{
@@ -244,4 +245,84 @@ void DrawSkeleton( const std::vector<JointTransform>& _joints, const DirectX::XM
 		if ( _joints[ i ].m_parent >= 0 )
 			DrawBone( _joints[ i ].m_transform, _joints[ _joints[ i ].m_parent ].m_transform, _worldMatrix );
 	}
+}
+
+DirectX::XMFLOAT4X4 Interpolate( const DirectX::XMFLOAT4X4& _a, const DirectX::XMFLOAT4X4& _b, float _t )
+{
+	DirectX::XMFLOAT4X4 outMat_;
+	DirectX::XMVECTOR scaleA_, rotA_, transA_, scaleB_, rotB_, transB_, scaleOut_, rotOut_, transOut_;
+	DirectX::XMMatrixDecompose( &scaleA_, &rotA_, &transA_, XMLoadFloat4x4( &_a ) );
+	DirectX::XMMatrixDecompose( &scaleB_, &rotB_, &transB_, XMLoadFloat4x4( &_b ) );
+
+	scaleOut_ = DirectX::XMVectorLerp( scaleA_, scaleB_, _t );
+	rotOut_ = DirectX::XMQuaternionSlerp( rotA_, rotB_, _t );
+	transOut_ = DirectX::XMVectorLerp( transA_, transB_, _t );
+
+	DirectX::XMMatrixAffineTransformation( scaleOut_, DirectX::XMVectorZero(), rotOut_, transOut_ );
+	XMStoreFloat4x4( &outMat_, DirectX::XMMatrixAffineTransformation( scaleOut_, DirectX::XMVectorZero(), rotOut_, transOut_ ) );
+	return outMat_;
+}
+
+JointTransform Interpolate( const JointTransform& _a, const JointTransform& _b, double _t )
+{
+	JointTransform outJoint_;
+	outJoint_.m_parent = _a.m_parent;
+	outJoint_.m_transform = Interpolate( _a.m_transform, _b.m_transform, ( float )_t );
+	return outJoint_;
+}
+
+std::vector<JointTransform> Interpolate( const std::vector<JointTransform>& _a,
+										 const std::vector<JointTransform>& _b, double _t )
+{
+	std::vector<JointTransform> outJoints_;
+	for ( unsigned int i = 0u; i < _a.size(); ++i )
+		outJoints_.push_back( Interpolate( _a[ i ], _b[ i ], _t ) );
+	return outJoints_;
+}
+
+void DrawSkeletonAnimation( const AnimClip& _anim, const DirectX::XMFLOAT4X4& _world, double _time )
+{
+	std::vector<JointTransform> currFrame_;
+	_time = fmod( _time, _anim.m_duration );
+	unsigned int prevFrameIdx_ = 0u, nextFrameIdx_ = 0u;
+	double prevFrameTime_ = -DBL_MAX;
+	double nextFrameTime_ = DBL_MAX;
+	for ( unsigned int i = 0u; i < _anim.m_frames.size(); ++i )
+	{
+		const double time_ = _anim.m_frames[ i ].m_time;
+		if ( time_ > prevFrameTime_ )
+		{
+			prevFrameTime_ = time_;
+			prevFrameIdx_ = i;
+		}
+		if ( time_ < nextFrameTime_ )
+		{
+			nextFrameTime_ = time_;
+			nextFrameIdx_ = i;
+		}
+	}
+	for ( unsigned int i = 0u; i < _anim.m_frames.size(); ++i )
+	{
+		const double frameTime_ = _anim.m_frames[ i ].m_time;
+		if ( ( frameTime_ <= _time && frameTime_ >= prevFrameTime_ ) ||
+			( prevFrameTime_ > _time && frameTime_ <= _time ) )
+		{
+			prevFrameTime_ = frameTime_;
+			prevFrameIdx_ = i;
+		}
+		if ( ( frameTime_ >= _time && frameTime_ <= nextFrameTime_ ) ||
+			( prevFrameTime_ > _time && frameTime_ <= _time ) )
+		{
+			nextFrameTime_ = frameTime_;
+			nextFrameIdx_ = i;
+		}
+	}
+	if ( nextFrameIdx_ == prevFrameIdx_ )
+		currFrame_ = _anim.m_frames[ nextFrameIdx_ ].m_joints;
+	else
+		currFrame_ = Interpolate( _anim.m_frames[ prevFrameIdx_ ].m_joints,
+								  _anim.m_frames[ nextFrameIdx_ ].m_joints,
+								  ( _time - prevFrameTime_ ) / ( nextFrameTime_ - prevFrameTime_ ) );
+
+	DrawSkeleton( currFrame_, _world );
 }

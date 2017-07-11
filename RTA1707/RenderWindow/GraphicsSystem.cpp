@@ -316,7 +316,7 @@ void GraphicsSystem::DrawMeshes( void )
 		ID3D11DeviceContext& deviceContext_ = *m_deviceContext;
 		deviceContext_.IASetVertexBuffers( 0, 1, &m_defaultVertexBuffer, &stride_, &offset_ );
 		deviceContext_.IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
-		deviceContext_.Draw( m_defaultVertexCount, 0u );
+		//deviceContext_.Draw( m_defaultVertexCount, 0u );
 	}
 }
 void GraphicsSystem::SetMvpBuffer( void )
