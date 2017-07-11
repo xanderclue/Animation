@@ -14,7 +14,7 @@ const FbxSkeleton* GetSkeletonRoot( const FbxPose* );
 std::vector<PositionTriangle> MeshToTriangles( const FbxMesh* );
 std::vector<JointNode> GetJointNodes( const FbxSkeleton* );
 
-std::vector<PositionTriangle> FBXDLL::FBX_GetBindPoseMesh( const char* const _file )
+std::vector<PositionTriangle> FBXDLL::FBX_GetMeshBindPose( const char* const _file )
 {
 	std::vector<PositionTriangle> triangles_;
 
@@ -51,8 +51,26 @@ std::vector<PositionTriangle> FBXDLL::FBX_GetBindPoseMesh( const char* const _fi
 
 	return triangles_;
 }
-
-std::vector<JointTransform> FBXDLL::FBX_GetJoints( const char* const _file )
+void CopyMatrix( const FbxAMatrix& _inMat, DirectX::XMFLOAT4X4& _outMat )
+{
+	_outMat._11 = ( float )( _inMat.mData[ 0 ][ 0 ] );
+	_outMat._12 = ( float )( _inMat.mData[ 0 ][ 1 ] );
+	_outMat._13 = ( float )( _inMat.mData[ 0 ][ 2 ] );
+	_outMat._14 = ( float )( _inMat.mData[ 0 ][ 3 ] );
+	_outMat._21 = ( float )( _inMat.mData[ 1 ][ 0 ] );
+	_outMat._22 = ( float )( _inMat.mData[ 1 ][ 1 ] );
+	_outMat._23 = ( float )( _inMat.mData[ 1 ][ 2 ] );
+	_outMat._24 = ( float )( _inMat.mData[ 1 ][ 3 ] );
+	_outMat._31 = ( float )( _inMat.mData[ 2 ][ 0 ] );
+	_outMat._32 = ( float )( _inMat.mData[ 2 ][ 1 ] );
+	_outMat._33 = ( float )( _inMat.mData[ 2 ][ 2 ] );
+	_outMat._34 = ( float )( _inMat.mData[ 2 ][ 3 ] );
+	_outMat._41 = ( float )( _inMat.mData[ 3 ][ 0 ] );
+	_outMat._42 = ( float )( _inMat.mData[ 3 ][ 1 ] );
+	_outMat._43 = ( float )( _inMat.mData[ 3 ][ 2 ] );
+	_outMat._44 = ( float )( _inMat.mData[ 3 ][ 3 ] );
+}
+std::vector<JointTransform> FBXDLL::FBX_GetJointsBindPose( const char* const _file )
 {
 	std::vector<JointTransform> joints_;
 
@@ -78,22 +96,7 @@ std::vector<JointTransform> FBXDLL::FBX_GetJoints( const char* const _file )
 		const unsigned int size_ = ( unsigned int )jointNodes_.size();
 		for ( unsigned int i = 0u; i < size_; ++i )
 		{
-			temp_.m_transform._11 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 0 ][ 0 ] );
-			temp_.m_transform._12 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 0 ][ 1 ] );
-			temp_.m_transform._13 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 0 ][ 2 ] );
-			temp_.m_transform._14 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 0 ][ 3 ] );
-			temp_.m_transform._21 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 1 ][ 0 ] );
-			temp_.m_transform._22 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 1 ][ 1 ] );
-			temp_.m_transform._23 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 1 ][ 2 ] );
-			temp_.m_transform._24 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 1 ][ 3 ] );
-			temp_.m_transform._31 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 2 ][ 0 ] );
-			temp_.m_transform._32 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 2 ][ 1 ] );
-			temp_.m_transform._33 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 2 ][ 2 ] );
-			temp_.m_transform._34 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 2 ][ 3 ] );
-			temp_.m_transform._41 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 3 ][ 0 ] );
-			temp_.m_transform._42 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 3 ][ 1 ] );
-			temp_.m_transform._43 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 3 ][ 2 ] );
-			temp_.m_transform._44 = ( float )( jointNodes_[ i ].m_node->EvaluateGlobalTransform().mData[ 3 ][ 3 ] );
+			CopyMatrix( jointNodes_[ i ].m_node->EvaluateGlobalTransform(), temp_.m_transform );
 			temp_.m_parent = jointNodes_[ i ].m_parent;
 			joints_.push_back( temp_ );
 		}
@@ -130,6 +133,62 @@ bool FBXDLL::TestFBX_PrintInfo( const char* const _file )
 	scene_->Destroy();
 	manager_->Destroy();
 	return true;
+}
+
+void GetAnimClip( FbxScene* _scene, AnimClip& _animClip )
+{
+	FbxAnimStack* animStack_ = _scene->GetCurrentAnimationStack();
+	FbxTimeSpan timeSpan_ = animStack_->GetLocalTimeSpan();
+	FbxTime duration_ = timeSpan_.GetDuration();
+	_animClip.m_duration = duration_.GetSecondDouble();
+	FbxLongLong frameCount_ = duration_.GetFrameCount( FbxTime::EMode::eFrames24 );
+	std::vector<JointNode> jointNodes_ = GetJointNodes( GetSkeletonRoot( GetBindPose( _scene ) ) );
+	FbxTime time_;
+	FbxLongLong i;
+	size_t j;
+	for ( i = 1i64; i < frameCount_; ++i )
+	{
+		Keyframe keyFrame;
+		time_.SetFrame( i, FbxTime::EMode::eFrames24 );
+		keyFrame.m_time = time_.GetSecondDouble();
+		for ( j = 0u; j < jointNodes_.size(); ++j )
+		{
+			JointTransform jointTransform_;
+			jointTransform_.m_parent = jointNodes_[ j ].m_parent;
+			CopyMatrix(
+				jointNodes_[ j ].m_node->EvaluateGlobalTransform( time_ ),
+				jointTransform_.m_transform );
+			keyFrame.m_joints.push_back( jointTransform_ );
+		}
+		_animClip.m_frames.push_back( keyFrame );
+	}
+}
+
+AnimClip FBXDLL::FBX_GetAnimationData( const char* const _file )
+{
+	AnimClip animClip_;
+
+	FbxManager* const manager_ = FbxManager::Create();
+	FbxIOSettings* const ioSettings_ = FbxIOSettings::Create( manager_, IOSROOT );
+	manager_->SetIOSettings( ioSettings_ );
+	FbxImporter* const importer_ = FbxImporter::Create( manager_, "" );
+	if ( !importer_->Initialize( _file, -1, manager_->GetIOSettings() ) )
+	{
+		printf( "Error: %s\n", importer_->GetStatus().GetErrorString() );
+		importer_->Destroy();
+		manager_->Destroy();
+		return animClip_;
+	}
+	FbxScene* const scene_ = FbxScene::Create( manager_, "myScene" );
+	importer_->Import( scene_ );
+	importer_->Destroy();
+
+	GetAnimClip( scene_, animClip_ );
+
+	scene_->Destroy();
+	manager_->Destroy();
+
+	return animClip_;
 }
 
 const FbxPose* GetBindPose( FbxScene* _scene )

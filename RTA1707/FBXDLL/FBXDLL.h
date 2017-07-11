@@ -16,9 +16,20 @@ struct JointTransform
 	DirectX::XMFLOAT4X4 m_transform;
 	int m_parent;
 };
+struct Keyframe
+{
+	std::vector<JointTransform> m_joints;
+	double m_time;
+};
+struct AnimClip
+{
+	std::vector<Keyframe> m_frames;
+	double m_duration;
+};
 namespace FBXDLL
 {
-	FBXDLL_API std::vector<PositionTriangle> FBX_GetBindPoseMesh( const char* const );
-	FBXDLL_API std::vector<JointTransform> FBX_GetJoints( const char* const );
+	FBXDLL_API std::vector<PositionTriangle> FBX_GetMeshBindPose( const char* const );
+	FBXDLL_API std::vector<JointTransform> FBX_GetJointsBindPose( const char* const );
+	FBXDLL_API AnimClip FBX_GetAnimationData( const char* const );
 	FBXDLL_API bool TestFBX_PrintInfo( const char* const );
 }
