@@ -1,32 +1,12 @@
 #pragma once
+#include "fbxdll_structs.h"
 
 #ifdef FBXDLL_EXPORTS
 #define FBXDLL_API __declspec( dllexport )
 #else
 #define FBXDLL_API __declspec( dllimport )
 #endif
-#include <vector>
-#include <DirectXMath.h>
-struct PositionUvTriangle
-{
-	DirectX::XMFLOAT3 m_posA, m_posB, m_posC;
-	DirectX::XMFLOAT2 m_uvA, m_uvB, m_uvC;
-};
-struct JointTransform
-{
-	DirectX::XMFLOAT4X4 m_transform;
-	int m_parent;
-};
-struct Keyframe
-{
-	std::vector<JointTransform> m_joints;
-	double m_time;
-};
-struct AnimClip
-{
-	std::vector<Keyframe> m_frames;
-	double m_duration;
-};
+
 namespace FBXDLL
 {
 	FBXDLL_API std::vector<PositionUvTriangle> FBX_GetMeshBindPose( const char* const );
