@@ -23,6 +23,16 @@ INT_PTR CALLBACK About( HWND, UINT, WPARAM, LPARAM );
 TriangleMesh PositionTrianglesToMesh( const std::vector<PositionTriangle>&, const RGBAColor& = RGBAColor( 0.2f, 0.2f, 0.2f, 1.0f ) );
 void DrawSkeleton( const std::vector<JointTransform>&, const DirectX::XMFLOAT4X4& = GraphicsSystem::IDENTITYMATRIX );
 void DrawSkeletonAnimation( const AnimClip&, const DirectX::XMFLOAT4X4& = GraphicsSystem::IDENTITYMATRIX, double = 0.0 );
+inline DirectX::XMFLOAT4X4& operator*=( DirectX::XMFLOAT4X4& _a, const DirectX::XMMATRIX& _b )
+{
+	XMStoreFloat4x4( &_a, XMMatrixMultiply( XMLoadFloat4x4( &_a ), _b ) );
+	return _a;
+}
+inline DirectX::XMFLOAT4X4 operator*( DirectX::XMFLOAT4X4 _a, const DirectX::XMMATRIX& _b )
+{
+	XMStoreFloat4x4( &_a, DirectX::XMMatrixMultiply( XMLoadFloat4x4( &_a ), _b ) );
+	return _a;
+}
 
 int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int _nCmdShow )
 {
@@ -48,13 +58,13 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 	ZEROSTRUCT( msg_ );
 
 	DirectX::XMFLOAT4X4 teddyWorldMatrix_ = GraphicsSystem::IDENTITYMATRIX;
-	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixScaling( 0.03f, 0.03f, 0.03f ) ) );
-	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) ) ) );
-	XMStoreFloat4x4( &teddyWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &teddyWorldMatrix_ ), DirectX::XMMatrixTranslation( 3.0f, 0.0f, 0.0f ) ) );
+	teddyWorldMatrix_ *= DirectX::XMMatrixScaling( 0.03f, 0.03f, 0.03f );
+	teddyWorldMatrix_ *= DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) );
+	teddyWorldMatrix_ *= DirectX::XMMatrixTranslation( 3.0f, 0.0f, 0.0f );
 
 	DirectX::XMFLOAT4X4 mageWorldMatrix_ = GraphicsSystem::IDENTITYMATRIX;
-	XMStoreFloat4x4( &mageWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &mageWorldMatrix_ ), DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) ) ) );
-	XMStoreFloat4x4( &mageWorldMatrix_, XMMatrixMultiply( XMLoadFloat4x4( &mageWorldMatrix_ ), DirectX::XMMatrixTranslation( -3.0f, 0.0f, 0.0f ) ) );
+	mageWorldMatrix_ *= DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) );
+	mageWorldMatrix_ *= DirectX::XMMatrixTranslation( -3.0f, 0.0f, 0.0f );
 
 #ifndef NDEBUG
 	std::cout << "Init Graphics System...";
@@ -71,10 +81,10 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ ); std::cout << " Done\n";
 	std::cout << "Reading Mage_Run.fbx (Skeleton)...";
 	std::vector<JointTransform> jointsMage_ = FBXDLL::FBX_GetJointsBindPose( "Mage_Run.fbx" ); std::cout << " Done\n";
-	//std::cout << "Reading Teddy_Run.fbx (Animation)...";
-	//AnimClip animTeddy_ = FBXDLL::FBX_GetAnimationData( "Teddy_Run.fbx" ); std::cout << " Done\n";
-	//std::cout << "Reading Mage_Run.fbx (Animation)...";
-	//AnimClip animMage_ = FBXDLL::FBX_GetAnimationData( "Mage_Run.fbx" ); std::cout << " Done\n";
+	std::cout << "Reading Teddy_Run.fbx (Animation)...";
+	AnimClip animTeddy_ = FBXDLL::FBX_GetAnimationData( "Teddy_Run.fbx" ); std::cout << " Done\n";
+	std::cout << "Reading Mage_Run.fbx (Animation)...";
+	AnimClip animMage_ = FBXDLL::FBX_GetAnimationData( "Mage_Run.fbx" ); std::cout << " Done\n";
 #else
 	g_graphicsSystem.InitializeGraphicsSystem();
 	TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMeshBindPose( "Mage_Run.fbx" ) );
@@ -83,8 +93,8 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 	std::vector<JointTransform> jointsMage_ = FBXDLL::FBX_GetJointsBindPose( "Mage_Run.fbx" );
 	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ );
 	g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ );
-	//AnimClip animTeddy_ = FBXDLL::FBX_GetAnimationData( "Teddy_Run.fbx" );
-	//AnimClip animMage_ = FBXDLL::FBX_GetAnimationData( "Mage_Run.fbx" );
+	AnimClip animTeddy_ = FBXDLL::FBX_GetAnimationData( "Teddy_Run.fbx" );
+	AnimClip animMage_ = FBXDLL::FBX_GetAnimationData( "Mage_Run.fbx" );
 #endif
 
 	g_graphicsSystem.EnableDebugGraphics( true );
@@ -98,8 +108,8 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 		DrawSkeleton( jointsTeddy_, teddyWorldMatrix_ );
 		DrawSkeleton( jointsMage_, mageWorldMatrix_ );
 		time_ += ( t2_ - t1_ ) * 0.0000001;
-		//DrawSkeletonAnimation( animTeddy_, teddyWorldMatrix_, time_ );
-		//DrawSkeletonAnimation( animMage_, mageWorldMatrix_, time_ );
+		DrawSkeletonAnimation( animTeddy_, teddyWorldMatrix_ * DirectX::XMMatrixTranslation( 0.0f, 0.0f, 5.0f ), time_ );
+		DrawSkeletonAnimation( animMage_, mageWorldMatrix_ * DirectX::XMMatrixTranslation( 0.0f, 0.0f, 5.0f ), time_ );
 		g_graphicsSystem.DrawFrame();
 		if ( PeekMessage( &msg_, nullptr, 0, 0, PM_REMOVE ) )
 		{
