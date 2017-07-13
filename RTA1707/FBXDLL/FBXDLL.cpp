@@ -2,6 +2,7 @@
 #include "FBXDLL.h"
 #include <stdio.h>
 #include <fbxsdk.h>
+#include "PrintNode.h"
 
 struct JointNode
 {
@@ -107,8 +108,6 @@ std::vector<JointTransform> FBXDLL::FBX_GetJointsBindPose( const char* const _fi
 
 	return joints_;
 }
-
-#include "PrintNode.h"
 bool FBXDLL::TestFBX_PrintInfo( const char* const _file )
 {
 	// Source: "Autodesk FBX SDK Documentation: Your First FBX SDK Program"
@@ -134,7 +133,6 @@ bool FBXDLL::TestFBX_PrintInfo( const char* const _file )
 	manager_->Destroy();
 	return true;
 }
-
 void GetAnimClip( FbxScene* _scene, AnimClip& _animClip )
 {
 	FbxAnimStack* animStack_ = _scene->GetCurrentAnimationStack();
@@ -163,7 +161,6 @@ void GetAnimClip( FbxScene* _scene, AnimClip& _animClip )
 		_animClip.m_frames.push_back( keyFrame );
 	}
 }
-
 AnimClip FBXDLL::FBX_GetAnimationData( const char* const _file )
 {
 	AnimClip animClip_;
@@ -190,7 +187,6 @@ AnimClip FBXDLL::FBX_GetAnimationData( const char* const _file )
 
 	return animClip_;
 }
-
 const FbxPose* GetBindPose( FbxScene* _scene )
 {
 	const int poseCount_ = _scene->GetPoseCount();
@@ -200,7 +196,6 @@ const FbxPose* GetBindPose( FbxScene* _scene )
 			return pose_;
 	return nullptr;
 }
-
 const FbxSkeleton* GetSkeletonRoot( const FbxPose* _bindPose )
 {
 	const int nodeCount_ = _bindPose->GetCount();
@@ -211,7 +206,6 @@ const FbxSkeleton* GetSkeletonRoot( const FbxPose* _bindPose )
 				return skeleton_;
 	return nullptr;
 }
-
 std::vector<PositionUvTriangle> MeshToTriangles( const FbxMesh* _mesh )
 {
 	std::vector<PositionUvTriangle> triangles_;
@@ -264,7 +258,6 @@ std::vector<PositionUvTriangle> MeshToTriangles( const FbxMesh* _mesh )
 
 	return triangles_;
 }
-
 void AddNodes( const FbxSkeleton* _skeleton, std::vector<JointNode>& _outNodes, int _parent )
 {
 	if ( nullptr == _skeleton )
@@ -278,7 +271,6 @@ void AddNodes( const FbxSkeleton* _skeleton, std::vector<JointNode>& _outNodes, 
 	for ( int i = 0; i < childCount_; ++i )
 		AddNodes( node_.m_node->GetChild( i )->GetSkeleton(), _outNodes, idx_ );
 }
-
 std::vector<JointNode> GetJointNodes( const FbxSkeleton* _skeletonRoot )
 {
 	std::vector<JointNode> joints_;

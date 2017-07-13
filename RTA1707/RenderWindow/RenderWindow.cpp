@@ -127,7 +127,6 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 #endif
 	return ( int )msg_.wParam;
 }
-
 ATOM MyRegisterClass( HINSTANCE _hInstance )
 {
 	WNDCLASSEXW wcex_;
@@ -148,7 +147,6 @@ ATOM MyRegisterClass( HINSTANCE _hInstance )
 
 	return RegisterClassExW( &wcex_ );
 }
-
 BOOL InitInstance( HINSTANCE _hInstance, int _nCmdShow )
 {
 	g_hInst = _hInstance;
@@ -164,7 +162,6 @@ BOOL InitInstance( HINSTANCE _hInstance, int _nCmdShow )
 
 	return TRUE;
 }
-
 LRESULT CALLBACK WndProc( HWND _hWnd, UINT _message, WPARAM _wParam, LPARAM _lParam )
 {
 	switch ( _message )
@@ -209,7 +206,6 @@ TriangleMesh PositionTrianglesToMesh( const std::vector<PositionUvTriangle>& _tr
 	}
 	return outMesh_;
 }
-
 void DrawJoint( DirectX::XMFLOAT4X4 _transformationMatrix, const DirectX::XMFLOAT4X4& _worldMatrix )
 {
 	XMStoreFloat4x4( &_transformationMatrix, XMMatrixMultiply( XMLoadFloat4x4( &_transformationMatrix ), XMLoadFloat4x4( &_worldMatrix ) ) );
@@ -262,7 +258,6 @@ void DrawSkeleton( const std::vector<JointTransform>& _joints, const DirectX::XM
 			DrawBone( _joints[ i ].m_transform, _joints[ _joints[ i ].m_parent ].m_transform, _worldMatrix );
 	}
 }
-
 DirectX::XMFLOAT4X4 Interpolate( const DirectX::XMFLOAT4X4& _a, const DirectX::XMFLOAT4X4& _b, float _t )
 {
 	DirectX::XMFLOAT4X4 outMat_;
@@ -278,7 +273,6 @@ DirectX::XMFLOAT4X4 Interpolate( const DirectX::XMFLOAT4X4& _a, const DirectX::X
 	XMStoreFloat4x4( &outMat_, DirectX::XMMatrixAffineTransformation( scaleOut_, DirectX::XMVectorZero(), rotOut_, transOut_ ) );
 	return outMat_;
 }
-
 JointTransform Interpolate( const JointTransform& _a, const JointTransform& _b, double _t )
 {
 	JointTransform outJoint_;
@@ -286,7 +280,6 @@ JointTransform Interpolate( const JointTransform& _a, const JointTransform& _b, 
 	outJoint_.m_transform = Interpolate( _a.m_transform, _b.m_transform, ( float )_t );
 	return outJoint_;
 }
-
 std::vector<JointTransform> Interpolate( const std::vector<JointTransform>& _a,
 										 const std::vector<JointTransform>& _b, double _t )
 {
@@ -295,50 +288,56 @@ std::vector<JointTransform> Interpolate( const std::vector<JointTransform>& _a,
 		outJoints_.push_back( Interpolate( _a[ i ], _b[ i ], _t ) );
 	return outJoints_;
 }
-
 void DrawSkeletonAnimation( const AnimClip& _anim, const DirectX::XMFLOAT4X4& _world, double _time )
 {
 	std::vector<JointTransform> currFrame_;
 	_time = fmod( _time, _anim.m_duration );
 	unsigned int prevFrameIdx_ = 0u, nextFrameIdx_ = 0u, i;
-	double prevFrameTime_ = -DBL_MAX;
-	double nextFrameTime_ = DBL_MAX;
-	for ( i = 0u; i < _anim.m_frames.size(); ++i )
-	{
-		const double time_ = _anim.m_frames[ i ].m_time;
-		if ( time_ > prevFrameTime_ )
-		{
-			prevFrameTime_ = time_;
-			prevFrameIdx_ = i;
-		}
-		if ( time_ < nextFrameTime_ )
-		{
-			nextFrameTime_ = time_;
-			nextFrameIdx_ = i;
-		}
-	}
-	for ( i = 0u; i < _anim.m_frames.size(); ++i )
+	double prevFrameTime_ = -DBL_MAX, nextFrameTime_ = DBL_MAX;
+	const unsigned int numFrames = ( unsigned int )_anim.m_frames.size();
+	unsigned int maxFrameIdx_ = 0u, minFrameIdx_ = 0u;
+	double maxFrameTime_ = -DBL_MAX, minFrameTime_ = DBL_MAX;
+	for ( i = 0u; i < numFrames; ++i )
 	{
 		const double frameTime_ = _anim.m_frames[ i ].m_time;
-		if ( ( frameTime_ <= _time && frameTime_ >= prevFrameTime_ ) ||
-			( prevFrameTime_ > _time && frameTime_ <= _time ) )
+		if ( frameTime_ <= _time && frameTime_ >= prevFrameTime_ )
 		{
 			prevFrameTime_ = frameTime_;
 			prevFrameIdx_ = i;
 		}
-		if ( ( frameTime_ >= _time && frameTime_ <= nextFrameTime_ ) ||
-			( prevFrameTime_ > _time && frameTime_ <= _time ) )
+		if ( frameTime_ >= _time && frameTime_ <= nextFrameTime_ )
 		{
 			nextFrameTime_ = frameTime_;
 			nextFrameIdx_ = i;
 		}
+		if ( frameTime_ >= maxFrameTime_ )
+		{
+			maxFrameTime_ = frameTime_;
+			maxFrameIdx_ = i;
+		}
+		if ( frameTime_ <= minFrameTime_ )
+		{
+			minFrameTime_ = frameTime_;
+			minFrameIdx_ = i;
+		}
+	}
+	if ( _time < minFrameTime_ || _time > maxFrameTime_ )
+	{
+		const double duration_ = _anim.m_duration;
+		nextFrameIdx_ = minFrameIdx_;
+		prevFrameIdx_ = maxFrameIdx_;
+		prevFrameTime_ = 0.0;
+		nextFrameTime_ = minFrameTime_ + ( duration_ - maxFrameTime_ );
+		if ( _time < minFrameTime_ )
+			_time += duration_ - maxFrameTime_;
+		else if ( _time > maxFrameTime_ )
+			_time -= maxFrameTime_;
 	}
 	if ( nextFrameIdx_ == prevFrameIdx_ )
-		currFrame_ = _anim.m_frames[ nextFrameIdx_ ].m_joints;
+		currFrame_ = _anim.m_frames[ prevFrameIdx_ ].m_joints;
 	else
 		currFrame_ = Interpolate( _anim.m_frames[ prevFrameIdx_ ].m_joints,
 								  _anim.m_frames[ nextFrameIdx_ ].m_joints,
 								  ( _time - prevFrameTime_ ) / ( nextFrameTime_ - prevFrameTime_ ) );
-
 	DrawSkeleton( currFrame_, _world );
 }
