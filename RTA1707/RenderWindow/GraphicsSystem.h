@@ -32,6 +32,7 @@ struct PositionColorVertex
 	DirectX::XMFLOAT4 m_color;
 	PositionColorVertex( void );
 	PositionColorVertex( float, float, float, const RGBAColor& = RGBAColor::White );
+	PositionColorVertex( float _x, float _y, float _z, float _u, float _v );
 };
 
 struct ModelViewProjection

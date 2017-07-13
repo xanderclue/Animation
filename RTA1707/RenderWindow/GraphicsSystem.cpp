@@ -54,6 +54,10 @@ PositionColorVertex::PositionColorVertex( float _x, float _y, float _z, const RG
 	m_position( _x, _y, _z, 1.0f ), m_color( _color.m_rgba )
 {
 }
+PositionColorVertex::PositionColorVertex( float _x, float _y, float _z, float _u, float _v ) :
+	m_position( _x, _y, _z, 1.0f ), m_color( _u, _v, 0.2f, 1.0f )
+{
+}
 Camera::Camera( void )
 {
 	XMStoreFloat4x4( &m_cameraTransform, DirectX::XMMatrixIdentity() );

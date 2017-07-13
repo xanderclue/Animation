@@ -20,7 +20,7 @@ BOOL InitInstance( HINSTANCE, int );
 LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
 INT_PTR CALLBACK About( HWND, UINT, WPARAM, LPARAM );
 
-TriangleMesh PositionTrianglesToMesh( const std::vector<PositionTriangle>&, const RGBAColor& = RGBAColor( 0.2f, 0.2f, 0.2f, 1.0f ) );
+TriangleMesh PositionTrianglesToMesh( const std::vector<PositionUvTriangle>& );
 void DrawSkeleton( const std::vector<JointTransform>&, const DirectX::XMFLOAT4X4& = GraphicsSystem::IDENTITYMATRIX );
 void DrawSkeletonAnimation( const AnimClip&, const DirectX::XMFLOAT4X4& = GraphicsSystem::IDENTITYMATRIX, double = 0.0 );
 inline DirectX::XMFLOAT4X4& operator*=( DirectX::XMFLOAT4X4& _a, const DirectX::XMMATRIX& _b )
@@ -178,13 +178,13 @@ LRESULT CALLBACK WndProc( HWND _hWnd, UINT _message, WPARAM _wParam, LPARAM _lPa
 	return 0ll;
 }
 
-TriangleMesh PositionTrianglesToMesh( const std::vector<PositionTriangle>& _triangles, const RGBAColor& _color )
+TriangleMesh PositionTrianglesToMesh( const std::vector<PositionUvTriangle>& _triangles )
 {
 	TriangleMesh outMesh_;
 	Triangle tempTriangle_;
 	tempTriangle_.m_vertexA.m_color =
 		tempTriangle_.m_vertexB.m_color =
-		tempTriangle_.m_vertexC.m_color = _color.m_rgba;
+		tempTriangle_.m_vertexC.m_color = RGBAColor( 0.2f, 0.2f, 0.2f, 1.0f ).m_rgba;
 	tempTriangle_.m_vertexA.m_position.w =
 		tempTriangle_.m_vertexB.m_position.w =
 		tempTriangle_.m_vertexC.m_position.w = 1.0f;
@@ -193,12 +193,18 @@ TriangleMesh PositionTrianglesToMesh( const std::vector<PositionTriangle>& _tria
 		tempTriangle_.m_vertexA.m_position.x = _triangles[ i ].m_posA.x;
 		tempTriangle_.m_vertexA.m_position.y = _triangles[ i ].m_posA.y;
 		tempTriangle_.m_vertexA.m_position.z = _triangles[ i ].m_posA.z;
+		tempTriangle_.m_vertexA.m_color.x = _triangles[ i ].m_uvA.x;
+		tempTriangle_.m_vertexA.m_color.y = _triangles[ i ].m_uvA.y;
 		tempTriangle_.m_vertexB.m_position.x = _triangles[ i ].m_posB.x;
 		tempTriangle_.m_vertexB.m_position.y = _triangles[ i ].m_posB.y;
 		tempTriangle_.m_vertexB.m_position.z = _triangles[ i ].m_posB.z;
+		tempTriangle_.m_vertexB.m_color.x = _triangles[ i ].m_uvB.x;
+		tempTriangle_.m_vertexB.m_color.y = _triangles[ i ].m_uvB.y;
 		tempTriangle_.m_vertexC.m_position.x = _triangles[ i ].m_posC.x;
 		tempTriangle_.m_vertexC.m_position.y = _triangles[ i ].m_posC.y;
 		tempTriangle_.m_vertexC.m_position.z = _triangles[ i ].m_posC.z;
+		tempTriangle_.m_vertexC.m_color.x = _triangles[ i ].m_uvC.x;
+		tempTriangle_.m_vertexC.m_color.y = _triangles[ i ].m_uvC.y;
 		outMesh_.AddTriangle( tempTriangle_ );
 	}
 	return outMesh_;
@@ -294,10 +300,10 @@ void DrawSkeletonAnimation( const AnimClip& _anim, const DirectX::XMFLOAT4X4& _w
 {
 	std::vector<JointTransform> currFrame_;
 	_time = fmod( _time, _anim.m_duration );
-	unsigned int prevFrameIdx_ = 0u, nextFrameIdx_ = 0u;
+	unsigned int prevFrameIdx_ = 0u, nextFrameIdx_ = 0u, i;
 	double prevFrameTime_ = -DBL_MAX;
 	double nextFrameTime_ = DBL_MAX;
-	for ( unsigned int i = 0u; i < _anim.m_frames.size(); ++i )
+	for ( i = 0u; i < _anim.m_frames.size(); ++i )
 	{
 		const double time_ = _anim.m_frames[ i ].m_time;
 		if ( time_ > prevFrameTime_ )
@@ -311,7 +317,7 @@ void DrawSkeletonAnimation( const AnimClip& _anim, const DirectX::XMFLOAT4X4& _w
 			nextFrameIdx_ = i;
 		}
 	}
-	for ( unsigned int i = 0u; i < _anim.m_frames.size(); ++i )
+	for ( i = 0u; i < _anim.m_frames.size(); ++i )
 	{
 		const double frameTime_ = _anim.m_frames[ i ].m_time;
 		if ( ( frameTime_ <= _time && frameTime_ >= prevFrameTime_ ) ||

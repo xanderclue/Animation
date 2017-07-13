@@ -11,12 +11,12 @@ struct JointNode
 
 const FbxPose* GetBindPose( FbxScene* );
 const FbxSkeleton* GetSkeletonRoot( const FbxPose* );
-std::vector<PositionTriangle> MeshToTriangles( const FbxMesh* );
+std::vector<PositionUvTriangle> MeshToTriangles( const FbxMesh* );
 std::vector<JointNode> GetJointNodes( const FbxSkeleton* );
 
-std::vector<PositionTriangle> FBXDLL::FBX_GetMeshBindPose( const char* const _file )
+std::vector<PositionUvTriangle> FBXDLL::FBX_GetMeshBindPose( const char* const _file )
 {
-	std::vector<PositionTriangle> triangles_;
+	std::vector<PositionUvTriangle> triangles_;
 
 	FbxManager* const manager_ = FbxManager::Create();
 	FbxIOSettings* const ioSettings_ = FbxIOSettings::Create( manager_, IOSROOT );
@@ -212,9 +212,9 @@ const FbxSkeleton* GetSkeletonRoot( const FbxPose* _bindPose )
 	return nullptr;
 }
 
-std::vector<PositionTriangle> MeshToTriangles( const FbxMesh* _mesh )
+std::vector<PositionUvTriangle> MeshToTriangles( const FbxMesh* _mesh )
 {
-	std::vector<PositionTriangle> triangles_;
+	std::vector<PositionUvTriangle> triangles_;
 
 	if ( !_mesh->IsTriangleMesh() )
 	{
@@ -226,24 +226,38 @@ std::vector<PositionTriangle> MeshToTriangles( const FbxMesh* _mesh )
 	const int polygonCount_ = _mesh->GetPolygonCount();
 	const int* const polygonVertices_ = _mesh->GetPolygonVertices();
 	const FbxVector4* const controlPoints_ = _mesh->GetControlPoints();
-	PositionTriangle tempTriangle_;
+	PositionUvTriangle tempTriangle_;
 	FbxVector4 tempVector_;
+	FbxVector2 tempUv_;
+	bool unmapped_;
+	FbxStringList uvSetNames_;
+	_mesh->GetUVSetNames( uvSetNames_ );
+	const char* uvSetName_ = uvSetNames_[ 0 ];
 	for ( int i = 0; i < polygonCount_; ++i )
 	{
 		tempVector_ = controlPoints_[ polygonVertices_[ i * 3 ] ];
+		_mesh->GetPolygonVertexUV( i, 0, uvSetName_, tempUv_, unmapped_ );
 		tempTriangle_.m_posA.x = ( float )tempVector_.mData[ 0 ];
 		tempTriangle_.m_posA.y = ( float )tempVector_.mData[ 1 ];
 		tempTriangle_.m_posA.z = ( float )tempVector_.mData[ 2 ];
+		tempTriangle_.m_uvA.x = ( float )tempUv_.mData[ 0 ];
+		tempTriangle_.m_uvA.y = ( float )tempUv_.mData[ 1 ];
 
 		tempVector_ = controlPoints_[ polygonVertices_[ i * 3 + 1 ] ];
+		_mesh->GetPolygonVertexUV( i, 1, uvSetName_, tempUv_, unmapped_ );
 		tempTriangle_.m_posB.x = ( float )tempVector_.mData[ 0 ];
 		tempTriangle_.m_posB.y = ( float )tempVector_.mData[ 1 ];
 		tempTriangle_.m_posB.z = ( float )tempVector_.mData[ 2 ];
+		tempTriangle_.m_uvB.x = ( float )tempUv_.mData[ 0 ];
+		tempTriangle_.m_uvB.y = ( float )tempUv_.mData[ 1 ];
 
 		tempVector_ = controlPoints_[ polygonVertices_[ i * 3 + 2 ] ];
+		_mesh->GetPolygonVertexUV( i, 2, uvSetName_, tempUv_, unmapped_ );
 		tempTriangle_.m_posC.x = ( float )tempVector_.mData[ 0 ];
 		tempTriangle_.m_posC.y = ( float )tempVector_.mData[ 1 ];
 		tempTriangle_.m_posC.z = ( float )tempVector_.mData[ 2 ];
+		tempTriangle_.m_uvC.x = ( float )tempUv_.mData[ 0 ];
+		tempTriangle_.m_uvC.y = ( float )tempUv_.mData[ 1 ];
 
 		triangles_.push_back( tempTriangle_ );
 	}
