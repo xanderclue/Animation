@@ -27,6 +27,12 @@
     <ClInclude Include="PrintNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="fbxdll_helper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fbxdll_structs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -36,6 +42,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fbxdll_helper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PrintNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

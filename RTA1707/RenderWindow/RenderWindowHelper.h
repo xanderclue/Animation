@@ -1,5 +1,5 @@
 #pragma once
-#include "graphics_structs.h"
+#include "GraphicsSystem.h"
 
 TriangleMesh PositionTrianglesToMesh( const std::vector<PositionUvTriangle>& );
 void DrawSkeleton( const std::vector<JointTransform>&, const DirectX::XMFLOAT4X4& = GraphicsSystem::IDENTITYMATRIX );

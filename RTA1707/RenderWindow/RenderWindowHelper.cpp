@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "RenderWindowHelper.h"
 #include "GraphicsSystem.h"
+#include <iostream>
 extern GraphicsSystem g_graphicsSystem;
 void CheckKeyToggleWireframe( void )
 {

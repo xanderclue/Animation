@@ -2,7 +2,6 @@
 #include "RenderWindow.h"
 #include <iostream>
 #include <chrono>
-#include "GraphicsSystem.h"
 #include "FBXDLL.h"
 #include "RenderWindowHelper.h"
 

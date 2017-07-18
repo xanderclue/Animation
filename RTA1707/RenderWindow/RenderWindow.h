@@ -1,5 +1,6 @@
 #pragma once
 #include "resource.h"
+#include "GraphicsSystem.h"
 
 #define MAX_LOADSTRING 100
 

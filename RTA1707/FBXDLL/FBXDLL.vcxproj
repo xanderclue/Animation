@@ -153,6 +153,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="FBXDLL.h" />
+    <ClInclude Include="fbxdll_helper.h" />
+    <ClInclude Include="fbxdll_structs.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="PrintNode.h" />
@@ -173,6 +175,8 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="FBXDLL.cpp" />
+    <ClCompile Include="fbxdll_helper.cpp" />
+    <ClCompile Include="PrintNode.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
