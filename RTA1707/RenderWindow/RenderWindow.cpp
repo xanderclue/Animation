@@ -28,12 +28,12 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 	MSG msg_;
 	ZEROSTRUCT( msg_ );
 
-	DirectX::XMFLOAT4X4 teddyWorldMatrix_ = GraphicsSystem::IDENTITYMATRIX;
+	DirectX::XMFLOAT4X4 teddyWorldMatrix_ = Renderer::GraphicsSystem::IDENTITYMATRIX;
 	teddyWorldMatrix_ *= DirectX::XMMatrixScaling( 0.03f, 0.03f, 0.03f );
 	teddyWorldMatrix_ *= DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) );
 	teddyWorldMatrix_ *= DirectX::XMMatrixTranslation( 3.0f, 0.0f, 0.0f );
 
-	DirectX::XMFLOAT4X4 mageWorldMatrix_ = GraphicsSystem::IDENTITYMATRIX;
+	DirectX::XMFLOAT4X4 mageWorldMatrix_ = Renderer::GraphicsSystem::IDENTITYMATRIX;
 	mageWorldMatrix_ *= DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) );
 	mageWorldMatrix_ *= DirectX::XMMatrixTranslation( -3.0f, 0.0f, 0.0f );
 
@@ -41,31 +41,31 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 	std::cout << "Init Graphics System...";
 	g_graphicsSystem.InitializeGraphicsSystem(); std::cout << " Done\n";
 	std::cout << "Reading Teddy_Run.fbx (Mesh)...";
-	TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMeshBindPose( "Teddy_Run.fbx" ) ); std::cout << " Done\n";
+	Renderer::TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMeshBindPose( "Teddy_Run.fbx" ) ); std::cout << " Done\n";
 	std::cout << "Adding Mesh Teddy_Run...";
 	g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ ); std::cout << " Done\n";
 	std::cout << "Reading Teddy_Run.fbx (Skeleton)...";
-	std::vector<JointTransform> jointsTeddy_ = FBXDLL::FBX_GetJointsBindPose( "Teddy_Run.fbx" ); std::cout << " Done\n";
+	std::vector<FBXDLL::JointTransform> jointsTeddy_ = FBXDLL::FBX_GetJointsBindPose( "Teddy_Run.fbx" ); std::cout << " Done\n";
 	std::cout << "Reading Mage_Run.fbx (Mesh)...";
-	TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMeshBindPose( "Mage_Run.fbx" ) ); std::cout << " Done\n";
+	Renderer::TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMeshBindPose( "Mage_Run.fbx" ) ); std::cout << " Done\n";
 	std::cout << "Adding Mesh Mage_Run...";
 	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ ); std::cout << " Done\n";
 	std::cout << "Reading Mage_Run.fbx (Skeleton)...";
-	std::vector<JointTransform> jointsMage_ = FBXDLL::FBX_GetJointsBindPose( "Mage_Run.fbx" ); std::cout << " Done\n";
+	std::vector<FBXDLL::JointTransform> jointsMage_ = FBXDLL::FBX_GetJointsBindPose( "Mage_Run.fbx" ); std::cout << " Done\n";
 	std::cout << "Reading Teddy_Run.fbx (Animation)...";
-	AnimClip animTeddy_ = FBXDLL::FBX_GetAnimationData( "Teddy_Run.fbx" ); std::cout << " Done\n";
+	FBXDLL::AnimClip animTeddy_ = FBXDLL::FBX_GetAnimationData( "Teddy_Run.fbx" ); std::cout << " Done\n";
 	std::cout << "Reading Mage_Run.fbx (Animation)...";
-	AnimClip animMage_ = FBXDLL::FBX_GetAnimationData( "Mage_Run.fbx" ); std::cout << " Done\n";
+	FBXDLL::AnimClip animMage_ = FBXDLL::FBX_GetAnimationData( "Mage_Run.fbx" ); std::cout << " Done\n";
 #else
 	g_graphicsSystem.InitializeGraphicsSystem();
-	TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMeshBindPose( "Mage_Run.fbx" ) );
-	TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMeshBindPose( "Teddy_Run.fbx" ) );
-	std::vector<JointTransform> jointsTeddy_ = FBXDLL::FBX_GetJointsBindPose( "Teddy_Run.fbx" );
-	std::vector<JointTransform> jointsMage_ = FBXDLL::FBX_GetJointsBindPose( "Mage_Run.fbx" );
+	Renderer::TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMeshBindPose( "Mage_Run.fbx" ) );
+	Renderer::TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMeshBindPose( "Teddy_Run.fbx" ) );
+	std::vector<FBXDLL::JointTransform> jointsTeddy_ = FBXDLL::FBX_GetJointsBindPose( "Teddy_Run.fbx" );
+	std::vector<FBXDLL::JointTransform> jointsMage_ = FBXDLL::FBX_GetJointsBindPose( "Mage_Run.fbx" );
 	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ );
 	g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ );
-	AnimClip animTeddy_ = FBXDLL::FBX_GetAnimationData( "Teddy_Run.fbx" );
-	AnimClip animMage_ = FBXDLL::FBX_GetAnimationData( "Mage_Run.fbx" );
+	FBXDLL::AnimClip animTeddy_ = FBXDLL::FBX_GetAnimationData( "Teddy_Run.fbx" );
+	FBXDLL::AnimClip animMage_ = FBXDLL::FBX_GetAnimationData( "Mage_Run.fbx" );
 #endif
 
 	g_graphicsSystem.EnableDebugGraphics( true );

@@ -8,7 +8,7 @@ HINSTANCE g_hInst;
 WCHAR g_szTitle[ MAX_LOADSTRING ];
 WCHAR g_szWindowClass[ MAX_LOADSTRING ];
 HWND g_hWnd;
-GraphicsSystem g_graphicsSystem;
+Renderer::GraphicsSystem g_graphicsSystem;
 extern const int g_windowWidth = 1000;
 extern const int g_windowHeight = 500;
 

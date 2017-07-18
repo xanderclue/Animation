@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "fbxdll_helper.h"
+#include <fbxsdk.h>
 
-void CopyMatrix( const FbxAMatrix& _inMat, DirectX::XMFLOAT4X4& _outMat )
+void CopyMatrix( const fbxsdk::FbxAMatrix& _inMat, DirectX::XMFLOAT4X4& _outMat )
 {
 	_outMat._11 = ( float )( _inMat.mData[ 0 ][ 0 ] );
 	_outMat._12 = ( float )( _inMat.mData[ 0 ][ 1 ] );
@@ -20,25 +21,25 @@ void CopyMatrix( const FbxAMatrix& _inMat, DirectX::XMFLOAT4X4& _outMat )
 	_outMat._43 = ( float )( _inMat.mData[ 3 ][ 2 ] );
 	_outMat._44 = ( float )( _inMat.mData[ 3 ][ 3 ] );
 }
-void GetAnimClip( FbxScene* _scene, AnimClip& _animClip )
+void GetAnimClip( fbxsdk::FbxScene* _scene, FBXDLL::AnimClip& _animClip )
 {
-	FbxAnimStack* animStack_ = _scene->GetCurrentAnimationStack();
-	FbxTimeSpan timeSpan_ = animStack_->GetLocalTimeSpan();
-	FbxTime duration_ = timeSpan_.GetDuration();
+	fbxsdk::FbxAnimStack* animStack_ = _scene->GetCurrentAnimationStack();
+	fbxsdk::FbxTimeSpan timeSpan_ = animStack_->GetLocalTimeSpan();
+	fbxsdk::FbxTime duration_ = timeSpan_.GetDuration();
 	_animClip.m_duration = duration_.GetSecondDouble();
-	FbxLongLong frameCount_ = duration_.GetFrameCount( FbxTime::EMode::eFrames24 );
-	std::vector<JointNode> jointNodes_ = GetJointNodes( GetSkeletonRoot( GetBindPose( _scene ) ) );
-	FbxTime time_;
-	FbxLongLong i;
+	fbxsdk::FbxLongLong frameCount_ = duration_.GetFrameCount( fbxsdk::FbxTime::EMode::eFrames24 );
+	std::vector<FBXDLL::JointNode> jointNodes_ = GetJointNodes( GetSkeletonRoot( GetBindPose( _scene ) ) );
+	fbxsdk::FbxTime time_;
+	fbxsdk::FbxLongLong i;
 	size_t j;
 	for ( i = 1i64; i < frameCount_; ++i )
 	{
-		Keyframe keyFrame;
-		time_.SetFrame( i, FbxTime::EMode::eFrames24 );
+		FBXDLL::Keyframe keyFrame;
+		time_.SetFrame( i, fbxsdk::FbxTime::EMode::eFrames24 );
 		keyFrame.m_time = time_.GetSecondDouble();
 		for ( j = 0u; j < jointNodes_.size(); ++j )
 		{
-			JointTransform jointTransform_;
+			FBXDLL::JointTransform jointTransform_;
 			jointTransform_.m_parent = jointNodes_[ j ].m_parent;
 			CopyMatrix(
 				jointNodes_[ j ].m_node->EvaluateGlobalTransform( time_ ),
@@ -48,28 +49,28 @@ void GetAnimClip( FbxScene* _scene, AnimClip& _animClip )
 		_animClip.m_frames.push_back( keyFrame );
 	}
 }
-const FbxPose* GetBindPose( FbxScene* _scene )
+const fbxsdk::FbxPose* GetBindPose( fbxsdk::FbxScene* _scene )
 {
 	const int poseCount_ = _scene->GetPoseCount();
-	const FbxPose* pose_;
+	const fbxsdk::FbxPose* pose_;
 	for ( int i = 0; i < poseCount_; ++i )
 		if ( ( pose_ = _scene->GetPose( i ) )->IsBindPose() )
 			return pose_;
 	return nullptr;
 }
-const FbxSkeleton* GetSkeletonRoot( const FbxPose* _bindPose )
+const fbxsdk::FbxSkeleton* GetSkeletonRoot( const fbxsdk::FbxPose* _bindPose )
 {
 	const int nodeCount_ = _bindPose->GetCount();
-	const FbxSkeleton* skeleton_;
+	const fbxsdk::FbxSkeleton* skeleton_;
 	for ( int i = 0; i < nodeCount_; ++i )
 		if ( nullptr != ( skeleton_ = _bindPose->GetNode( i )->GetSkeleton() ) )
 			if ( skeleton_->IsSkeletonRoot() )
 				return skeleton_;
 	return nullptr;
 }
-std::vector<PositionUvTriangle> MeshToTriangles( const FbxMesh* _mesh )
+std::vector<FBXDLL::PositionUvTriangle> MeshToTriangles( const fbxsdk::FbxMesh* _mesh )
 {
-	std::vector<PositionUvTriangle> triangles_;
+	std::vector<FBXDLL::PositionUvTriangle> triangles_;
 
 	if ( !_mesh->IsTriangleMesh() )
 	{
@@ -80,12 +81,12 @@ std::vector<PositionUvTriangle> MeshToTriangles( const FbxMesh* _mesh )
 
 	const int polygonCount_ = _mesh->GetPolygonCount();
 	const int* const polygonVertices_ = _mesh->GetPolygonVertices();
-	const FbxVector4* const controlPoints_ = _mesh->GetControlPoints();
-	PositionUvTriangle tempTriangle_;
-	FbxVector4 tempVector_;
-	FbxVector2 tempUv_;
+	const fbxsdk::FbxVector4* const controlPoints_ = _mesh->GetControlPoints();
+	FBXDLL::PositionUvTriangle tempTriangle_;
+	fbxsdk::FbxVector4 tempVector_;
+	fbxsdk::FbxVector2 tempUv_;
 	bool unmapped_;
-	FbxStringList uvSetNames_;
+	fbxsdk::FbxStringList uvSetNames_;
 	_mesh->GetUVSetNames( uvSetNames_ );
 	const char* uvSetName_ = uvSetNames_[ 0 ];
 	for ( int i = 0; i < polygonCount_; ++i )
@@ -119,11 +120,11 @@ std::vector<PositionUvTriangle> MeshToTriangles( const FbxMesh* _mesh )
 
 	return triangles_;
 }
-void AddNodes( const FbxSkeleton* _skeleton, std::vector<JointNode>& _outNodes, int _parent )
+void AddNodes( const fbxsdk::FbxSkeleton* _skeleton, std::vector<FBXDLL::JointNode>& _outNodes, int _parent )
 {
 	if ( nullptr == _skeleton )
 		return;
-	JointNode node_;
+	FBXDLL::JointNode node_;
 	node_.m_parent = _parent;
 	node_.m_node = _skeleton->GetNode();
 	int idx_ = ( int )_outNodes.size();
@@ -132,9 +133,9 @@ void AddNodes( const FbxSkeleton* _skeleton, std::vector<JointNode>& _outNodes, 
 	for ( int i = 0; i < childCount_; ++i )
 		AddNodes( node_.m_node->GetChild( i )->GetSkeleton(), _outNodes, idx_ );
 }
-std::vector<JointNode> GetJointNodes( const FbxSkeleton* _skeletonRoot )
+std::vector<FBXDLL::JointNode> GetJointNodes( const fbxsdk::FbxSkeleton* _skeletonRoot )
 {
-	std::vector<JointNode> joints_;
+	std::vector<FBXDLL::JointNode> joints_;
 	AddNodes( _skeletonRoot, joints_, -1 );
 	return joints_;
 }

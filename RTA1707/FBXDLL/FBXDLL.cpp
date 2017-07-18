@@ -2,15 +2,17 @@
 #include "FBXDLL.h"
 #include <stdio.h>
 #include "fbxdll_helper.h"
+#include "PrintNode.h"
+#include <fbxsdk.h>
 
-std::vector<PositionUvTriangle> FBXDLL::FBX_GetMeshBindPose( const char* const _file )
+std::vector<FBXDLL::PositionUvTriangle> FBXDLL::FBX_GetMeshBindPose( const char* const _file )
 {
-	std::vector<PositionUvTriangle> triangles_;
+	std::vector<FBXDLL::PositionUvTriangle> triangles_;
 
-	FbxManager* const manager_ = FbxManager::Create();
-	FbxIOSettings* const ioSettings_ = FbxIOSettings::Create( manager_, IOSROOT );
+	fbxsdk::FbxManager* const manager_ = fbxsdk::FbxManager::Create();
+	fbxsdk::FbxIOSettings* const ioSettings_ = fbxsdk::FbxIOSettings::Create( manager_, IOSROOT );
 	manager_->SetIOSettings( ioSettings_ );
-	FbxImporter* const importer_ = FbxImporter::Create( manager_, "" );
+	fbxsdk::FbxImporter* const importer_ = fbxsdk::FbxImporter::Create( manager_, "" );
 	if ( !importer_->Initialize( _file, -1, manager_->GetIOSettings() ) )
 	{
 		printf( "Error: %s\n", importer_->GetStatus().GetErrorString() );
@@ -18,13 +20,13 @@ std::vector<PositionUvTriangle> FBXDLL::FBX_GetMeshBindPose( const char* const _
 		manager_->Destroy();
 		return triangles_;
 	}
-	FbxScene* const scene_ = FbxScene::Create( manager_, "myScene" );
+	fbxsdk::FbxScene* const scene_ = fbxsdk::FbxScene::Create( manager_, "myScene" );
 	importer_->Import( scene_ );
 	importer_->Destroy();
 
-	const FbxPose* bindPose_ = GetBindPose( scene_ );
+	const fbxsdk::FbxPose* bindPose_ = GetBindPose( scene_ );
 	const int nodeCount_ = bindPose_->GetCount();
-	const FbxMesh* mesh_;
+	const fbxsdk::FbxMesh* mesh_;
 	for ( int i = 0; i < nodeCount_; ++i )
 	{
 		mesh_ = bindPose_->GetNode( i )->GetMesh();
@@ -40,14 +42,14 @@ std::vector<PositionUvTriangle> FBXDLL::FBX_GetMeshBindPose( const char* const _
 
 	return triangles_;
 }
-std::vector<JointTransform> FBXDLL::FBX_GetJointsBindPose( const char* const _file )
+std::vector<FBXDLL::JointTransform> FBXDLL::FBX_GetJointsBindPose( const char* const _file )
 {
-	std::vector<JointTransform> joints_;
+	std::vector<FBXDLL::JointTransform> joints_;
 
-	FbxManager* const manager_ = FbxManager::Create();
-	FbxIOSettings* const ioSettings_ = FbxIOSettings::Create( manager_, IOSROOT );
+	fbxsdk::FbxManager* const manager_ = fbxsdk::FbxManager::Create();
+	fbxsdk::FbxIOSettings* const ioSettings_ = fbxsdk::FbxIOSettings::Create( manager_, IOSROOT );
 	manager_->SetIOSettings( ioSettings_ );
-	FbxImporter* const importer_ = FbxImporter::Create( manager_, "" );
+	fbxsdk::FbxImporter* const importer_ = fbxsdk::FbxImporter::Create( manager_, "" );
 	if ( !importer_->Initialize( _file, -1, manager_->GetIOSettings() ) )
 	{
 		printf( "Error: %s\n", importer_->GetStatus().GetErrorString() );
@@ -55,14 +57,14 @@ std::vector<JointTransform> FBXDLL::FBX_GetJointsBindPose( const char* const _fi
 		manager_->Destroy();
 		return joints_;
 	}
-	FbxScene* const scene_ = FbxScene::Create( manager_, "myScene" );
+	fbxsdk::FbxScene* const scene_ = fbxsdk::FbxScene::Create( manager_, "myScene" );
 	importer_->Import( scene_ );
 	importer_->Destroy();
 
-	const FbxSkeleton* skeletonRoot_ = GetSkeletonRoot( GetBindPose( scene_ ) );
-	std::vector<JointNode> jointNodes_ = GetJointNodes( skeletonRoot_ );
+	const fbxsdk::FbxSkeleton* skeletonRoot_ = GetSkeletonRoot( GetBindPose( scene_ ) );
+	std::vector<FBXDLL::JointNode> jointNodes_ = GetJointNodes( skeletonRoot_ );
 	{
-		JointTransform temp_;
+		FBXDLL::JointTransform temp_;
 		const unsigned int size_ = ( unsigned int )jointNodes_.size();
 		for ( unsigned int i = 0u; i < size_; ++i )
 		{
@@ -80,10 +82,10 @@ std::vector<JointTransform> FBXDLL::FBX_GetJointsBindPose( const char* const _fi
 bool FBXDLL::TestFBX_PrintInfo( const char* const _file )
 {
 	// Source: "Autodesk FBX SDK Documentation: Your First FBX SDK Program"
-	FbxManager* const manager_ = FbxManager::Create();
-	FbxIOSettings* const ioSettings_ = FbxIOSettings::Create( manager_, IOSROOT );
+	fbxsdk::FbxManager* const manager_ = fbxsdk::FbxManager::Create();
+	fbxsdk::FbxIOSettings* const ioSettings_ = fbxsdk::FbxIOSettings::Create( manager_, IOSROOT );
 	manager_->SetIOSettings( ioSettings_ );
-	FbxImporter* const importer_ = FbxImporter::Create( manager_, "" );
+	fbxsdk::FbxImporter* const importer_ = fbxsdk::FbxImporter::Create( manager_, "" );
 	if ( !importer_->Initialize( _file, -1, manager_->GetIOSettings() ) )
 	{
 		printf( "Error: %s\n", importer_->GetStatus().GetErrorString() );
@@ -91,10 +93,10 @@ bool FBXDLL::TestFBX_PrintInfo( const char* const _file )
 		manager_->Destroy();
 		return false;
 	}
-	FbxScene* const scene_ = FbxScene::Create( manager_, "myScene" );
+	fbxsdk::FbxScene* const scene_ = fbxsdk::FbxScene::Create( manager_, "myScene" );
 	importer_->Import( scene_ );
 	importer_->Destroy();
-	const FbxNode* const rootNode_ = scene_->GetRootNode();
+	const fbxsdk::FbxNode* const rootNode_ = scene_->GetRootNode();
 	if ( rootNode_ )
 		for ( int i = 0; i < rootNode_->GetChildCount(); ++i )
 			PrintNode( rootNode_->GetChild( i ) );
@@ -102,14 +104,14 @@ bool FBXDLL::TestFBX_PrintInfo( const char* const _file )
 	manager_->Destroy();
 	return true;
 }
-AnimClip FBXDLL::FBX_GetAnimationData( const char* const _file )
+FBXDLL::AnimClip FBXDLL::FBX_GetAnimationData( const char* const _file )
 {
-	AnimClip animClip_;
+	FBXDLL::AnimClip animClip_;
 
-	FbxManager* const manager_ = FbxManager::Create();
-	FbxIOSettings* const ioSettings_ = FbxIOSettings::Create( manager_, IOSROOT );
+	fbxsdk::FbxManager* const manager_ = fbxsdk::FbxManager::Create();
+	fbxsdk::FbxIOSettings* const ioSettings_ = fbxsdk::FbxIOSettings::Create( manager_, IOSROOT );
 	manager_->SetIOSettings( ioSettings_ );
-	FbxImporter* const importer_ = FbxImporter::Create( manager_, "" );
+	fbxsdk::FbxImporter* const importer_ = fbxsdk::FbxImporter::Create( manager_, "" );
 	if ( !importer_->Initialize( _file, -1, manager_->GetIOSettings() ) )
 	{
 		printf( "Error: %s\n", importer_->GetStatus().GetErrorString() );
@@ -117,7 +119,7 @@ AnimClip FBXDLL::FBX_GetAnimationData( const char* const _file )
 		manager_->Destroy();
 		return animClip_;
 	}
-	FbxScene* const scene_ = FbxScene::Create( manager_, "myScene" );
+	fbxsdk::FbxScene* const scene_ = fbxsdk::FbxScene::Create( manager_, "myScene" );
 	importer_->Import( scene_ );
 	importer_->Destroy();
 
