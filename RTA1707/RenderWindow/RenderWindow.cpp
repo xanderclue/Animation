@@ -37,22 +37,20 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 	mageWorldMatrix_ *= DirectX::XMMatrixRotationY( DirectX::XMConvertToRadians( 180.0f ) );
 	mageWorldMatrix_ *= DirectX::XMMatrixTranslation( -3.0f, 0.0f, 0.0f );
 
+	g_graphicsSystem.InitializeGraphicsSystem();
+
 #ifndef NDEBUG
-	std::cout << "Init Graphics System...";
-	g_graphicsSystem.InitializeGraphicsSystem(); std::cout << " Done\n";
-	std::cout << "Reading Teddy_Run.fbx (Mesh)...";
+	std::cout << "Loading Teddy_Run.fbx ( Mesh & Skeleton w/ Weights )...";
 	std::vector<FBXDLL::JointTransform> jointsTeddy_;
-	Renderer::TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMesh( "Teddy_Run.fbx", jointsTeddy_ ) ); std::cout << " Done\n";
-	std::cout << "Adding Mesh Teddy_Run...";
+	Renderer::TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMesh( "Teddy_Run.fbx", jointsTeddy_ ) );
 	g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ ); std::cout << " Done\n";
-	std::cout << "Reading Mage_Run.fbx (Mesh)...";
-	std::vector<FBXDLL::JointTransform> jointsMage_;
-	Renderer::TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMesh( "Mage_Run.fbx", jointsMage_ ) ); std::cout << " Done\n";
-	std::cout << "Adding Mesh Mage_Run...";
-	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ ); std::cout << " Done\n";
-	std::cout << "Reading Teddy_Run.fbx (Animation)...";
+	std::cout << "Loading Teddy_Run.fbx ( Animation Frames )...";
 	FBXDLL::AnimClip animTeddy_ = FBXDLL::FBX_GetAnimationData( "Teddy_Run.fbx" ); std::cout << " Done\n";
-	std::cout << "Reading Mage_Run.fbx (Animation)...";
+	std::cout << "Loading Mage_Run.fbx ( Mesh & Skeleton w/ Weights )...";
+	std::vector<FBXDLL::JointTransform> jointsMage_;
+	Renderer::TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMesh( "Mage_Run.fbx", jointsMage_ ) );
+	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ ); std::cout << " Done\n";
+	std::cout << "Loading Mage_Run.fbx ( Animation Frames )...";
 	FBXDLL::AnimClip animMage_ = FBXDLL::FBX_GetAnimationData( "Mage_Run.fbx" ); std::cout << " Done\n";
 #else
 	g_graphicsSystem.InitializeGraphicsSystem();
@@ -60,10 +58,10 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 	std::vector<FBXDLL::JointTransform> jointsMage_;
 	Renderer::TriangleMesh mageMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMesh( "Mage_Run.fbx", jointsMage_ ) );
 	Renderer::TriangleMesh teddyMesh_ = PositionTrianglesToMesh( FBXDLL::FBX_GetMesh( "Teddy_Run.fbx", jointsTeddy_ ) );
-	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ );
-	g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ );
 	FBXDLL::AnimClip animTeddy_ = FBXDLL::FBX_GetAnimationData( "Teddy_Run.fbx" );
 	FBXDLL::AnimClip animMage_ = FBXDLL::FBX_GetAnimationData( "Mage_Run.fbx" );
+	g_graphicsSystem.AddMesh( &mageMesh_, mageWorldMatrix_ );
+	g_graphicsSystem.AddMesh( &teddyMesh_, teddyWorldMatrix_ );
 #endif
 
 	std::vector<DirectX::XMFLOAT4X4>
@@ -88,6 +86,9 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 	mageMesh_.m_joints = &( jointTransformsMage_[ 0u ] );
 	teddyMesh_.m_invBindJoints = &( jointTransformsTeddyInvBind_[ 0u ] );
 	mageMesh_.m_invBindJoints = &( jointTransformsMageInvBind_[ 0u ] );
+
+	//WriteBinFile( "TeddyRun.bin", teddyMesh_, animTeddy_ );
+	//WriteBinFile( "MageRun.bin", mageMesh_, animMage_ );
 
 	g_graphicsSystem.EnableDebugGraphics( true );
 	long long t2_ = std::chrono::system_clock::now().time_since_epoch().count(), t1_;

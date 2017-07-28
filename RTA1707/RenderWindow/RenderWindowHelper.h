@@ -10,3 +10,5 @@ DirectX::XMFLOAT4X4& operator*=( DirectX::XMFLOAT4X4&, const DirectX::XMMATRIX& 
 DirectX::XMFLOAT4X4 operator*( DirectX::XMFLOAT4X4, const DirectX::XMMATRIX& );
 DirectX::XMFLOAT4X4 operator*( DirectX::XMFLOAT4X4, const DirectX::XMFLOAT4X4& );
 DirectX::XMFLOAT4X4 GetMatrixInverse( const DirectX::XMFLOAT4X4& );
+bool WriteBinFile( const std::string&, const Renderer::TriangleMesh&, const FBXDLL::AnimClip& );
+bool LoadBinFile( const std::string&, Renderer::TriangleMesh&, FBXDLL::AnimClip& );

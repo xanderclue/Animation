@@ -2,6 +2,7 @@
 #include "RenderWindowHelper.h"
 #include "GraphicsSystem.h"
 #include <iostream>
+#include <fstream>
 extern Renderer::GraphicsSystem g_graphicsSystem;
 std::vector<DirectX::XMFLOAT4X4> g_nothing( 64u );
 void CheckKeyToggleWireframe( void )
@@ -255,4 +256,61 @@ DirectX::XMFLOAT4X4 GetMatrixInverse( const DirectX::XMFLOAT4X4& _inMat )
 	DirectX::XMFLOAT4X4 outMat_;
 	DirectX::XMStoreFloat4x4( &outMat_, DirectX::XMMatrixInverse( nullptr, DirectX::XMLoadFloat4x4( &_inMat ) ) );
 	return outMat_;
+}
+bool WriteBinFile( const std::string& _filename, const Renderer::TriangleMesh& _mesh, const FBXDLL::AnimClip& _anim )
+{
+	std::ofstream file_;
+	file_.open( _filename.c_str(), std::ios_base::out | std::ios_base::trunc | std::ios_base::binary );
+	if ( !file_.is_open() )
+		return false;
+
+	unsigned int tmpUint32, i;
+	int j;
+	file_.write( ( char* )&( tmpUint32 = _mesh.GetNumTriangles() ), 4u );
+	for ( i = 0u; i < _mesh.GetNumTriangles(); ++i )
+	{
+		file_.write( ( char* )&( _mesh.GetTriangles()[ i ].m_vertices[ 0u ].m_position ), 12u );
+		file_.write( ( char* )&( _mesh.GetTriangles()[ i ].m_vertices[ 0u ].m_color ), 8u );
+		file_.write( ( char* )&( _mesh.GetTriangles()[ i ].m_vertices[ 0u ].m_weights ), 16u );
+		file_.write( ( char* )&( _mesh.GetTriangles()[ i ].m_vertices[ 0u ].m_indices ), 16u );
+		file_.write( ( char* )&( _mesh.GetTriangles()[ i ].m_vertices[ 1u ].m_position ), 12u );
+		file_.write( ( char* )&( _mesh.GetTriangles()[ i ].m_vertices[ 1u ].m_color ), 8u );
+		file_.write( ( char* )&( _mesh.GetTriangles()[ i ].m_vertices[ 1u ].m_weights ), 16u );
+		file_.write( ( char* )&( _mesh.GetTriangles()[ i ].m_vertices[ 1u ].m_indices ), 16u );
+		file_.write( ( char* )&( _mesh.GetTriangles()[ i ].m_vertices[ 2u ].m_position ), 12u );
+		file_.write( ( char* )&( _mesh.GetTriangles()[ i ].m_vertices[ 2u ].m_color ), 8u );
+		file_.write( ( char* )&( _mesh.GetTriangles()[ i ].m_vertices[ 2u ].m_weights ), 16u );
+		file_.write( ( char* )&( _mesh.GetTriangles()[ i ].m_vertices[ 2u ].m_indices ), 16u );
+	}
+	file_.write( ( char* )&( _mesh.m_numJoints ), 4u );
+	file_.write( ( char* )_mesh.m_invBindJoints, _mesh.m_numJoints * 64u );
+	file_.write( ( char* )&( _anim.m_duration ), 8u );
+	file_.write( ( char* )&( tmpUint32 = ( unsigned int )_anim.m_frames.size() ), 4u );
+	for ( i = 0u; i < ( unsigned int )_anim.m_frames.size(); ++i )
+	{
+		file_.write( ( char* )&( _anim.m_frames[ i ].m_time ), 8u );
+		for ( j = 0; j < _mesh.m_numJoints; ++j )
+		{
+			file_.write( ( char* )&( _anim.m_frames[ i ].m_joints[ j ].m_parent ), 4u );
+			file_.write( ( char* )&( _anim.m_frames[ i ].m_joints[ j ].m_transform ), 64u );
+		}
+	}
+
+	file_.close();
+	return true;
+}
+bool LoadBinFile( const std::string& _filename, Renderer::TriangleMesh& _mesh, FBXDLL::AnimClip& _anim )
+{
+	std::ifstream file_;
+	file_.open( _filename.c_str(), std::ios_base::in | std::ios_base::binary );
+	if ( !file_.is_open() )
+		return false;
+
+	// TODO
+	( void )_mesh;
+	( void )_anim;
+
+	file_.close();
+	// return true;
+	return false;
 }
