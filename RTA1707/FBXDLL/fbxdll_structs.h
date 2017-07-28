@@ -6,9 +6,9 @@ namespace FBXDLL
 {
 	struct Skinned
 	{
-		DirectX::XMFLOAT4 m_jointWeights;
-		int m_jointIndices[ 4u ];
-		int m_cpIndex;
+		DirectX::XMFLOAT4 m_jointWeights = DirectX::XMFLOAT4( 0.0f, 0.0f, 0.0f, 0.0f );
+		int m_jointIndices[ 4u ] = { -1, -1, -1, -1 };
+		int m_cpIndex = -1;
 		int m_weightCount = 0;
 	};
 	struct PositionUvTriangle

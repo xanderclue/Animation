@@ -45,7 +45,8 @@ std::vector<FBXDLL::PositionUvTriangle> FBXDLL::FBX_GetMesh( const char* const _
 
 	const int nodeCount_ = bindPose_->GetCount();
 	const fbxsdk::FbxMesh* mesh_;
-	for ( int i = 0; i < nodeCount_; ++i )
+	int i, j, k;
+	for ( i = 0; i < nodeCount_; ++i )
 	{
 		mesh_ = bindPose_->GetNode( i )->GetMesh();
 		if ( nullptr != mesh_ )
@@ -54,9 +55,10 @@ std::vector<FBXDLL::PositionUvTriangle> FBXDLL::FBX_GetMesh( const char* const _
 			break;
 		}
 	}
-	fbxsdk::FbxDeformer* deformer_;
-	fbxsdk::FbxSkin* skin_ = nullptr;
-	for ( int i = 0; i < mesh_->GetDeformerCount(); ++i )
+	const fbxsdk::FbxDeformer* deformer_;
+	const fbxsdk::FbxSkin* skin_ = nullptr;
+	const int deformerCount_ = mesh_->GetDeformerCount();
+	for ( i = 0; i < deformerCount_; ++i )
 	{
 		deformer_ = mesh_->GetDeformer( i );
 		if ( fbxsdk::FbxDeformer::EDeformerType::eSkin == deformer_->GetDeformerType() )
@@ -65,28 +67,32 @@ std::vector<FBXDLL::PositionUvTriangle> FBXDLL::FBX_GetMesh( const char* const _
 			break;
 		}
 	}
-	fbxsdk::FbxCluster* cluster_;
-	int clusterCount_ = skin_->GetClusterCount();
-	for ( int i = 0; i < clusterCount_; ++i )
+	const fbxsdk::FbxCluster* cluster_;
+	const int clusterCount_ = skin_->GetClusterCount();
+	const fbxsdk::FbxNode* link_;
+	int jointIndex_, cpCount_, cpIndex_;
+	float weight_;
+	for ( i = 0; i < clusterCount_; ++i )
 	{
 		cluster_ = skin_->GetCluster( i );
-		fbxsdk::FbxNode* link_ = cluster_->GetLink();
-		int jointIndex_ = -1;
-		for ( int j = 0u; j < ( int )jointNodes_.size(); ++j )
+		link_ = cluster_->GetLink();
+		cpCount_ = cluster_->GetControlPointIndicesCount();
+		jointIndex_ = -1;
+		for ( j = 0; j < ( int )jointNodes_.size(); ++j )
 		{
-			if ( jointNodes_[ i ].m_node == link_ )
+			if ( jointNodes_[ j ].m_node == link_ )
 			{
 				jointIndex_ = j;
 				break;
 			}
 		}
-		for ( int j = 0; j < cluster_->GetControlPointIndicesCount(); ++j )
+		for ( j = 0; j < cpCount_; ++j )
 		{
-			float weight_ = ( float )cluster_->GetControlPointWeights()[ i ];
-			int index_ = cluster_->GetControlPointIndices()[ i ];
-			for ( unsigned int k = 0u; k < triangles_.size(); ++k )
+			weight_ = ( float )cluster_->GetControlPointWeights()[ j ];
+			cpIndex_ = cluster_->GetControlPointIndices()[ j ];
+			for ( k = 0u; k < ( int )triangles_.size(); ++k )
 			{
-				if ( triangles_[ k ].m_skinnedA.m_cpIndex == index_ )
+				if ( triangles_[ k ].m_skinnedA.m_cpIndex == cpIndex_ )
 				{
 					int& weightCount_ = triangles_[ k ].m_skinnedA.m_weightCount;
 					if ( weightCount_ < 4 )
@@ -95,9 +101,38 @@ std::vector<FBXDLL::PositionUvTriangle> FBXDLL::FBX_GetMesh( const char* const _
 						triangles_[ k ].m_skinnedA.m_jointIndices[ weightCount_ ] = jointIndex_;
 						++weightCount_;
 					}
+					else
+					{
+						float mx = triangles_[ k ].m_skinnedA.m_jointWeights.x;
+						mx = min( triangles_[ k ].m_skinnedA.m_jointWeights.y, mx );
+						mx = min( triangles_[ k ].m_skinnedA.m_jointWeights.z, mx );
+						mx = min( triangles_[ k ].m_skinnedA.m_jointWeights.w, mx );
+						if ( weight_ > mx )
+						{
+							float mn = triangles_[ k ].m_skinnedA.m_jointWeights.x;
+							int mnidx = 0;
+							if ( triangles_[ k ].m_skinnedA.m_jointWeights.y < mn )
+							{
+								mn = triangles_[ k ].m_skinnedA.m_jointWeights.y;
+								mnidx = 1;
+							}
+							if ( triangles_[ k ].m_skinnedA.m_jointWeights.z < mn )
+							{
+								mn = triangles_[ k ].m_skinnedA.m_jointWeights.z;
+								mnidx = 2;
+							}
+							if ( triangles_[ k ].m_skinnedA.m_jointWeights.w < mn )
+							{
+								mn = triangles_[ k ].m_skinnedA.m_jointWeights.w;
+								mnidx = 3;
+							}
+							( ( float* )&triangles_[ k ].m_skinnedA.m_jointWeights )[ mnidx ] = weight_;
+							triangles_[ k ].m_skinnedA.m_jointIndices[ mnidx ] = jointIndex_;
+						}
+					}
 				}
 
-				if ( triangles_[ k ].m_skinnedB.m_cpIndex == index_ )
+				if ( triangles_[ k ].m_skinnedB.m_cpIndex == cpIndex_ )
 				{
 					int& weightCount_ = triangles_[ k ].m_skinnedB.m_weightCount;
 					if ( weightCount_ < 4 )
@@ -106,9 +141,38 @@ std::vector<FBXDLL::PositionUvTriangle> FBXDLL::FBX_GetMesh( const char* const _
 						triangles_[ k ].m_skinnedB.m_jointIndices[ weightCount_ ] = jointIndex_;
 						++weightCount_;
 					}
+					else
+					{
+						float mx = triangles_[ k ].m_skinnedB.m_jointWeights.x;
+						mx = min( triangles_[ k ].m_skinnedB.m_jointWeights.y, mx );
+						mx = min( triangles_[ k ].m_skinnedB.m_jointWeights.z, mx );
+						mx = min( triangles_[ k ].m_skinnedB.m_jointWeights.w, mx );
+						if ( weight_ > mx )
+						{
+							float mn = triangles_[ k ].m_skinnedB.m_jointWeights.x;
+							int mnidx = 0;
+							if ( triangles_[ k ].m_skinnedB.m_jointWeights.y < mn )
+							{
+								mn = triangles_[ k ].m_skinnedB.m_jointWeights.y;
+								mnidx = 1;
+							}
+							if ( triangles_[ k ].m_skinnedB.m_jointWeights.z < mn )
+							{
+								mn = triangles_[ k ].m_skinnedB.m_jointWeights.z;
+								mnidx = 2;
+							}
+							if ( triangles_[ k ].m_skinnedB.m_jointWeights.w < mn )
+							{
+								mn = triangles_[ k ].m_skinnedB.m_jointWeights.w;
+								mnidx = 3;
+							}
+							( ( float* )&triangles_[ k ].m_skinnedB.m_jointWeights )[ mnidx ] = weight_;
+							triangles_[ k ].m_skinnedB.m_jointIndices[ mnidx ] = jointIndex_;
+						}
+					}
 				}
 
-				if ( triangles_[ k ].m_skinnedC.m_cpIndex == index_ )
+				if ( triangles_[ k ].m_skinnedC.m_cpIndex == cpIndex_ )
 				{
 					int& weightCount_ = triangles_[ k ].m_skinnedC.m_weightCount;
 					if ( weightCount_ < 4 )
@@ -116,6 +180,35 @@ std::vector<FBXDLL::PositionUvTriangle> FBXDLL::FBX_GetMesh( const char* const _
 						( ( float* )&triangles_[ k ].m_skinnedC.m_jointWeights )[ weightCount_ ] = weight_;
 						triangles_[ k ].m_skinnedC.m_jointIndices[ weightCount_ ] = jointIndex_;
 						++weightCount_;
+					}
+					else
+					{
+						float mx = triangles_[ k ].m_skinnedC.m_jointWeights.x;
+						mx = min( triangles_[ k ].m_skinnedC.m_jointWeights.y, mx );
+						mx = min( triangles_[ k ].m_skinnedC.m_jointWeights.z, mx );
+						mx = min( triangles_[ k ].m_skinnedC.m_jointWeights.w, mx );
+						if ( weight_ > mx )
+						{
+							float mn = triangles_[ k ].m_skinnedC.m_jointWeights.x;
+							int mnidx = 0;
+							if ( triangles_[ k ].m_skinnedC.m_jointWeights.y < mn )
+							{
+								mn = triangles_[ k ].m_skinnedC.m_jointWeights.y;
+								mnidx = 1;
+							}
+							if ( triangles_[ k ].m_skinnedC.m_jointWeights.z < mn )
+							{
+								mn = triangles_[ k ].m_skinnedC.m_jointWeights.z;
+								mnidx = 2;
+							}
+							if ( triangles_[ k ].m_skinnedC.m_jointWeights.w < mn )
+							{
+								mn = triangles_[ k ].m_skinnedC.m_jointWeights.w;
+								mnidx = 3;
+							}
+							( ( float* )&triangles_[ k ].m_skinnedC.m_jointWeights )[ mnidx ] = weight_;
+							triangles_[ k ].m_skinnedC.m_jointIndices[ mnidx ] = jointIndex_;
+						}
 					}
 				}
 			}

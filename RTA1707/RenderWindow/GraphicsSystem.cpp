@@ -8,6 +8,7 @@
 extern HWND g_hWnd;
 extern const int g_windowWidth;
 extern const int g_windowHeight;
+extern DirectX::XMFLOAT4X4 operator*( DirectX::XMFLOAT4X4, const DirectX::XMFLOAT4X4& );
 
 const DirectX::XMFLOAT4X4 Renderer::GraphicsSystem::IDENTITYMATRIX = DirectX::XMFLOAT4X4( 1.0f, 0.0f, 0.0f, 0.0f,
 																						  0.0f, 1.0f, 0.0f, 0.0f,
@@ -132,6 +133,9 @@ void Renderer::GraphicsSystem::DrawMesh( const Renderer::TriangleMesh& _mesh, co
 	m_deviceContext->IASetVertexBuffers( 0, 1, &vertexBuffer_, &stride_, &offset_ );
 	m_deviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 	XMStoreFloat4x4( &m_modelViewProjection.m_model, XMMatrixTranspose( XMLoadFloat4x4( &_world ) ) );
+	m_modelViewProjection.m_joints[ 0 ] = IDENTITYMATRIX;
+	for ( int i = 0; i < _mesh.m_numJoints; ++i )
+		m_modelViewProjection.m_joints[ i ] = _mesh.m_invBindJoints[ i ] * _mesh.m_joints[ i ];
 	m_deviceContext->UpdateSubresource( m_modelViewProjectionBuffer, 0u, nullptr, &m_modelViewProjection, 0u, 0u );
 	m_deviceContext->VSSetConstantBuffers( 0u, 1u, &m_modelViewProjectionBuffer );
 	m_deviceContext->Draw( numVertices_, 0u );

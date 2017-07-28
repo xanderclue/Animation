@@ -66,6 +66,29 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 	FBXDLL::AnimClip animMage_ = FBXDLL::FBX_GetAnimationData( "Mage_Run.fbx" );
 #endif
 
+	std::vector<DirectX::XMFLOAT4X4>
+		jointTransformsTeddy_, jointTransformsMage_,
+		jointTransformsTeddyInvBind_, jointTransformsMageInvBind_;
+	jointTransformsTeddy_.reserve( jointsTeddy_.size() );
+	jointTransformsMage_.reserve( jointsMage_.size() );
+	unsigned int i;
+	for ( i = 0u; i < ( unsigned int )jointsTeddy_.size(); ++i )
+	{
+		jointTransformsTeddy_.push_back( jointsTeddy_[ i ].m_transform );
+		jointTransformsTeddyInvBind_.push_back( GetMatrixInverse( jointsTeddy_[ i ].m_transform ) );
+	}
+	for ( i = 0u; i < ( unsigned int )jointsMage_.size(); ++i )
+	{
+		jointTransformsMage_.push_back( jointsMage_[ i ].m_transform );
+		jointTransformsMageInvBind_.push_back( GetMatrixInverse( jointsMage_[ i ].m_transform ) );
+	}
+	teddyMesh_.m_numJoints = ( int )jointsTeddy_.size();
+	mageMesh_.m_numJoints = ( int )jointsMage_.size();
+	teddyMesh_.m_joints = &( jointTransformsTeddy_[ 0u ] );
+	mageMesh_.m_joints = &( jointTransformsMage_[ 0u ] );
+	teddyMesh_.m_invBindJoints = &( jointTransformsTeddyInvBind_[ 0u ] );
+	mageMesh_.m_invBindJoints = &( jointTransformsMageInvBind_[ 0u ] );
+
 	g_graphicsSystem.EnableDebugGraphics( true );
 	long long t2_ = std::chrono::system_clock::now().time_since_epoch().count(), t1_;
 	double time_ = 0.0;
@@ -77,11 +100,9 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 		t1_ = t2_;
 		t2_ = std::chrono::system_clock::now().time_since_epoch().count();
 		g_graphicsSystem.GetCamera().Update( ( t2_ - t1_ ) * 0.0000001f );
-		DrawSkeleton( jointsTeddy_, teddyWorldMatrix_ );
-		DrawSkeleton( jointsMage_, mageWorldMatrix_ );
 		time_ += ( t2_ - t1_ ) * 0.0000001;
-		DrawSkeletonAnimation( animTeddy_, teddyWorldMatrix_ * DirectX::XMMatrixTranslation( 0.0f, 0.0f, 5.0f ), time_, tweening_ );
-		DrawSkeletonAnimation( animMage_, mageWorldMatrix_ * DirectX::XMMatrixTranslation( 0.0f, 0.0f, 5.0f ), time_, tweening_ );
+		DrawSkeletonAnimation( animTeddy_, teddyWorldMatrix_, time_, tweening_, jointTransformsTeddy_ );
+		DrawSkeletonAnimation( animMage_, mageWorldMatrix_, time_, tweening_, jointTransformsMage_ );
 		g_graphicsSystem.DrawFrame();
 		if ( PeekMessage( &msg_, nullptr, 0, 0, PM_REMOVE ) )
 		{

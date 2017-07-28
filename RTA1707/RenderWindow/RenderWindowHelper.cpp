@@ -3,6 +3,7 @@
 #include "GraphicsSystem.h"
 #include <iostream>
 extern Renderer::GraphicsSystem g_graphicsSystem;
+std::vector<DirectX::XMFLOAT4X4> g_nothing( 64u );
 void CheckKeyToggleWireframe( void )
 {
 	static bool keyDown = false;
@@ -172,7 +173,7 @@ std::vector<FBXDLL::JointTransform> FrameInterpolation( const std::vector<FBXDLL
 		outJoints_.push_back( JointInterpolation( _a[ i ], _b[ i ], _t ) );
 	return outJoints_;
 }
-void DrawSkeletonAnimation( const FBXDLL::AnimClip& _anim, const DirectX::XMFLOAT4X4& _world, double _time, bool _tween )
+void DrawSkeletonAnimation( const FBXDLL::AnimClip& _anim, const DirectX::XMFLOAT4X4& _world, double _time, bool _tween, std::vector<DirectX::XMFLOAT4X4>& _joints )
 {
 	std::vector<FBXDLL::JointTransform> currFrame_;
 	_time = fmod( _time, _anim.m_duration );
@@ -231,6 +232,8 @@ void DrawSkeletonAnimation( const FBXDLL::AnimClip& _anim, const DirectX::XMFLOA
 	else
 		currFrame_ = _anim.m_frames[ _time - prevFrameTime_ < nextFrameTime_ - _time ? prevFrameIdx_ : nextFrameIdx_ ].m_joints;
 
+	for ( unsigned int i = 0u; i < _joints.size(); ++i )
+		_joints[ i ] = currFrame_[ i ].m_transform;
 	DrawSkeleton( currFrame_, _world );
 }
 DirectX::XMFLOAT4X4& operator*=( DirectX::XMFLOAT4X4& _a, const DirectX::XMMATRIX& _b )
@@ -242,4 +245,14 @@ DirectX::XMFLOAT4X4 operator*( DirectX::XMFLOAT4X4 _a, const DirectX::XMMATRIX& 
 {
 	XMStoreFloat4x4( &_a, DirectX::XMMatrixMultiply( XMLoadFloat4x4( &_a ), _b ) );
 	return _a;
+}
+DirectX::XMFLOAT4X4 operator*( DirectX::XMFLOAT4X4 _a, const DirectX::XMFLOAT4X4& _b )
+{
+	return _a * XMLoadFloat4x4( &_b );
+}
+DirectX::XMFLOAT4X4 GetMatrixInverse( const DirectX::XMFLOAT4X4& _inMat )
+{
+	DirectX::XMFLOAT4X4 outMat_;
+	DirectX::XMStoreFloat4x4( &outMat_, DirectX::XMMatrixInverse( nullptr, DirectX::XMLoadFloat4x4( &_inMat ) ) );
+	return outMat_;
 }

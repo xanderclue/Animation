@@ -3,6 +3,7 @@ cbuffer ModelViewProjectionBuffer : register( b0 )
 	matrix model;
 	matrix view;
 	matrix projection;
+	matrix joints[ 64 ];
 };
 
 struct VertexShaderInput
@@ -22,7 +23,20 @@ struct PixelShaderInput
 PixelShaderInput VShader( VertexShaderInput input )
 {
 	PixelShaderInput output;
-	output.position = mul( mul( mul( input.position, model ), view ), projection );
+	if ( input.indices.x >= 0 )
+	{
+		output.position = mul( joints[ input.indices.x ], input.position ) * input.weights.x;
+		if ( input.indices.y >= 0 )
+			output.position += mul( joints[ input.indices.y ], input.position ) * input.weights.y;
+		if ( input.indices.z >= 0 )
+			output.position += mul( joints[ input.indices.z ], input.position ) * input.weights.z;
+		if ( input.indices.w >= 0 )
+			output.position += mul( joints[ input.indices.w ], input.position ) * input.weights.w;
+	}
+	else
+		output.position = input.position;
+
+	output.position = mul( mul( mul( output.position, model ), view ), projection );
 	output.color = input.color;
 	return output;
 }

@@ -41,6 +41,7 @@ namespace Renderer
 		DirectX::XMFLOAT4X4 m_model;
 		DirectX::XMFLOAT4X4 m_view;
 		DirectX::XMFLOAT4X4 m_projection;
+		DirectX::XMFLOAT4X4 m_joints[ 64u ];
 	};
 
 	struct Camera
@@ -105,6 +106,9 @@ namespace Renderer
 		void Clear( void );
 		const Renderer::Triangle* GetTriangles( void ) const;
 		unsigned int GetNumTriangles( void ) const;
+		DirectX::XMFLOAT4X4* m_joints = nullptr;
+		const DirectX::XMFLOAT4X4* m_invBindJoints = nullptr;
+		int m_numJoints = 0u;
 	};
 }
 
