@@ -9,6 +9,8 @@ struct VertexShaderInput
 {
 	float4 position : POSITION;
 	float4 color : COLOR;
+	float4 weights : WEIGHTS;
+	int4 indices : INDICES;
 };
 
 struct PixelShaderInput

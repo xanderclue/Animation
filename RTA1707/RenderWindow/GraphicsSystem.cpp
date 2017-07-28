@@ -341,14 +341,18 @@ void Renderer::GraphicsSystem::InitializeShadersAndInputLayout( void )
 	g_hResult = m_device->CreatePixelShader( pixelShaderBlob_->GetBufferPointer(), pixelShaderBlob_->GetBufferSize(),
 											 NULL, &m_defaultPipeline.m_pixelShader );
 
-	static const D3D11_INPUT_ELEMENT_DESC inputElementDesc_[ 2u ] =
+	static const D3D11_INPUT_ELEMENT_DESC inputElementDesc_[ 4u ] =
 	{
 		{ "POSITION", 0u, DXGI_FORMAT_R32G32B32A32_FLOAT, 0u,
 		D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0u },
 		{ "COLOR", 0u, DXGI_FORMAT_R32G32B32A32_FLOAT, 0u,
+		D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0u },
+		{ "WEIGHTS", 0u, DXGI_FORMAT_R32G32B32A32_FLOAT, 0u,
+		D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0u },
+		{ "INDICES", 0u, DXGI_FORMAT_R32G32B32A32_SINT, 0u,
 		D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0u }
 	};
-	g_hResult = m_device->CreateInputLayout( inputElementDesc_, 2u, vertexShaderBlob_->GetBufferPointer(), vertexShaderBlob_->GetBufferSize(), &m_defaultPipeline.m_inputLayout );
+	g_hResult = m_device->CreateInputLayout( inputElementDesc_, 4u, vertexShaderBlob_->GetBufferPointer(), vertexShaderBlob_->GetBufferSize(), &m_defaultPipeline.m_inputLayout );
 }
 void Renderer::GraphicsSystem::DrawGroundLines( void )
 {

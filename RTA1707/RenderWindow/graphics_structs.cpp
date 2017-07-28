@@ -20,14 +20,17 @@ Renderer::RGBAColor::RGBAColor( float _r, float _g, float _b, float _a ) :
 }
 Renderer::PositionColorVertex::PositionColorVertex( void )
 {
+	m_indices.x = m_indices.y = m_indices.z = m_indices.w = -1;
 }
 Renderer::PositionColorVertex::PositionColorVertex( float _x, float _y, float _z, const Renderer::RGBAColor& _color ) :
 	m_position( _x, _y, _z, 1.0f ), m_color( _color.m_rgba )
 {
+	m_indices.x = m_indices.y = m_indices.z = m_indices.w = -1;
 }
 Renderer::PositionColorVertex::PositionColorVertex( float _x, float _y, float _z, float _u, float _v ) :
 	m_position( _x, _y, _z, 1.0f ), m_color( _u, _v, 0.2f, 1.0f )
 {
+	m_indices.x = m_indices.y = m_indices.z = m_indices.w = -1;
 }
 Renderer::Camera::Camera( void )
 {

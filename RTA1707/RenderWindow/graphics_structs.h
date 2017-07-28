@@ -29,6 +29,8 @@ namespace Renderer
 	{
 		DirectX::XMFLOAT4 m_position;
 		DirectX::XMFLOAT4 m_color;
+		DirectX::XMFLOAT4 m_weights;
+		DirectX::XMINT4 m_indices;
 		PositionColorVertex( void );
 		PositionColorVertex( float, float, float, const Renderer::RGBAColor& = Renderer::RGBAColor::White );
 		PositionColorVertex( float _x, float _y, float _z, float _u, float _v );
