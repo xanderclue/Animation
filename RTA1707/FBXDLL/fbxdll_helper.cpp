@@ -98,6 +98,7 @@ std::vector<FBXDLL::PositionUvTriangle> MeshToTriangles( const fbxsdk::FbxMesh* 
 		tempTriangle_.m_posA.z = ( float )tempVector_.mData[ 2 ];
 		tempTriangle_.m_uvA.x = ( float )tempUv_.mData[ 0 ];
 		tempTriangle_.m_uvA.y = ( float )tempUv_.mData[ 1 ];
+		tempTriangle_.m_skinnedA.m_cpIndex = polygonVertices_[ i * 3 ];
 
 		tempVector_ = controlPoints_[ polygonVertices_[ i * 3 + 1 ] ];
 		_mesh->GetPolygonVertexUV( i, 1, uvSetName_, tempUv_, unmapped_ );
@@ -106,6 +107,7 @@ std::vector<FBXDLL::PositionUvTriangle> MeshToTriangles( const fbxsdk::FbxMesh* 
 		tempTriangle_.m_posB.z = ( float )tempVector_.mData[ 2 ];
 		tempTriangle_.m_uvB.x = ( float )tempUv_.mData[ 0 ];
 		tempTriangle_.m_uvB.y = ( float )tempUv_.mData[ 1 ];
+		tempTriangle_.m_skinnedB.m_cpIndex = polygonVertices_[ i * 3 + 1 ];
 
 		tempVector_ = controlPoints_[ polygonVertices_[ i * 3 + 2 ] ];
 		_mesh->GetPolygonVertexUV( i, 2, uvSetName_, tempUv_, unmapped_ );
@@ -114,6 +116,7 @@ std::vector<FBXDLL::PositionUvTriangle> MeshToTriangles( const fbxsdk::FbxMesh* 
 		tempTriangle_.m_posC.z = ( float )tempVector_.mData[ 2 ];
 		tempTriangle_.m_uvC.x = ( float )tempUv_.mData[ 0 ];
 		tempTriangle_.m_uvC.y = ( float )tempUv_.mData[ 1 ];
+		tempTriangle_.m_skinnedC.m_cpIndex = polygonVertices_[ i * 3 + 2 ];
 
 		triangles_.push_back( tempTriangle_ );
 	}
