@@ -107,7 +107,7 @@ namespace Renderer
 		const Renderer::Triangle* GetTriangles( void ) const;
 		unsigned int GetNumTriangles( void ) const;
 		DirectX::XMFLOAT4X4* m_joints = nullptr;
-		const DirectX::XMFLOAT4X4* m_invBindJoints = nullptr;
+		DirectX::XMFLOAT4X4* m_invBindJoints = nullptr;
 		int m_numJoints = 0u;
 	};
 }

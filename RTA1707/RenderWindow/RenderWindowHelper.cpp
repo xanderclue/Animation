@@ -299,6 +299,12 @@ bool WriteBinFile( const std::string& _filename, const Renderer::TriangleMesh& _
 	file_.close();
 	return true;
 }
+static std::vector<DirectX::XMFLOAT4X4*> g_dynamicarrays;
+void CleanUp( void )
+{
+	for ( unsigned int i = 0u; i < ( unsigned int )g_dynamicarrays.size(); ++i )
+		delete[ ] g_dynamicarrays[ i ];
+}
 bool LoadBinFile( const std::string& _filename, Renderer::TriangleMesh& _mesh, FBXDLL::AnimClip& _anim )
 {
 	std::ifstream file_;
@@ -306,11 +312,53 @@ bool LoadBinFile( const std::string& _filename, Renderer::TriangleMesh& _mesh, F
 	if ( !file_.is_open() )
 		return false;
 
-	// TODO
-	( void )_mesh;
-	( void )_anim;
+	_mesh.Clear();
+	unsigned int tmpUint32, i;
+	int j;
+	file_.read( ( char* )&( tmpUint32 ), 4u );
+	_mesh.InitSize( tmpUint32 );
+	Renderer::Triangle triangle_;
+	triangle_.m_vertexA.m_color =
+		triangle_.m_vertexB.m_color =
+		triangle_.m_vertexC.m_color = Renderer::RGBAColor( 0.2f, 0.2f, 0.2f, 1.0f ).m_rgba;
+	triangle_.m_vertexA.m_position.w =
+		triangle_.m_vertexB.m_position.w =
+		triangle_.m_vertexC.m_position.w = 1.0f;
+	for ( i = 0u; i < tmpUint32; ++i )
+	{
+		file_.read( ( char* )&( triangle_.m_vertexA.m_position ), 12u );
+		file_.read( ( char* )&( triangle_.m_vertexA.m_color ), 8u );
+		file_.read( ( char* )&( triangle_.m_vertexA.m_weights ), 16u );
+		file_.read( ( char* )&( triangle_.m_vertexA.m_indices ), 16u );
+		file_.read( ( char* )&( triangle_.m_vertexB.m_position ), 12u );
+		file_.read( ( char* )&( triangle_.m_vertexB.m_color ), 8u );
+		file_.read( ( char* )&( triangle_.m_vertexB.m_weights ), 16u );
+		file_.read( ( char* )&( triangle_.m_vertexB.m_indices ), 16u );
+		file_.read( ( char* )&( triangle_.m_vertexC.m_position ), 12u );
+		file_.read( ( char* )&( triangle_.m_vertexC.m_color ), 8u );
+		file_.read( ( char* )&( triangle_.m_vertexC.m_weights ), 16u );
+		file_.read( ( char* )&( triangle_.m_vertexC.m_indices ), 16u );
+		_mesh.AddTriangle( triangle_ );
+	}
+	file_.read( ( char* )&( _mesh.m_numJoints ), 4u );
+	_mesh.m_invBindJoints = new DirectX::XMFLOAT4X4[ _mesh.m_numJoints ];
+	file_.read( ( char* )_mesh.m_invBindJoints, _mesh.m_numJoints * 64u );
+	g_dynamicarrays.push_back( _mesh.m_invBindJoints );
+	file_.read( ( char* )&( _anim.m_duration ), 8u );
+	file_.read( ( char* )&( tmpUint32 ), 4u );
+	_anim.m_frames.clear();
+	_anim.m_frames.reserve( tmpUint32 );
+	for ( i = 0u; i < ( unsigned int )_anim.m_frames.size(); ++i )
+	{
+		_anim.m_frames.push_back( FBXDLL::Keyframe() );
+		file_.read( ( char* )&( _anim.m_frames[ i ].m_time ), 8u );
+		for ( j = 0; j < _mesh.m_numJoints; ++j )
+		{
+			file_.read( ( char* )&( _anim.m_frames[ i ].m_joints[ j ].m_parent ), 4u );
+			file_.read( ( char* )&( _anim.m_frames[ i ].m_joints[ j ].m_transform ), 64u );
+		}
+	}
 
 	file_.close();
-	// return true;
-	return false;
+	return true;
 }

@@ -114,6 +114,7 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 			}
 		}
 	}
+	CleanUp();
 	g_graphicsSystem.ReleaseAll();
 
 #ifndef NDEBUG

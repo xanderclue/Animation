@@ -102,7 +102,10 @@ void Renderer::Camera::Update( float _dt )
 	}
 	prevMousePos_ = currMousePos_;
 }
-Renderer::Triangle::Triangle( void )
+Renderer::Triangle::Triangle( void ) :
+	m_vertexA( Renderer::PositionColorVertex() ),
+	m_vertexB( Renderer::PositionColorVertex() ),
+	m_vertexC( Renderer::PositionColorVertex() )
 {
 }
 Renderer::Triangle::Triangle( const Renderer::PositionColorVertex& _vertexA,
