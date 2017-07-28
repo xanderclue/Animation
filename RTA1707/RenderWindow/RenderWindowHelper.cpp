@@ -348,7 +348,7 @@ bool LoadBinFile( const std::string& _filename, Renderer::TriangleMesh& _mesh, F
 	file_.read( ( char* )&( tmpUint32 ), 4u );
 	_anim.m_frames.clear();
 	_anim.m_frames.reserve( tmpUint32 );
-	for ( i = 0u; i < ( unsigned int )_anim.m_frames.size(); ++i )
+	for ( i = 0u; i < tmpUint32; ++i )
 	{
 		_anim.m_frames.push_back( FBXDLL::Keyframe() );
 		file_.read( ( char* )&( _anim.m_frames[ i ].m_time ), 8u );

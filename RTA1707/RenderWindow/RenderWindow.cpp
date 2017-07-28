@@ -90,6 +90,8 @@ int APIENTRY wWinMain( _In_ HINSTANCE _hInstance, _In_opt_ HINSTANCE, _In_ LPWST
 	//WriteBinFile( "TeddyRun.bin", teddyMesh_, animTeddy_ );
 	//WriteBinFile( "MageRun.bin", mageMesh_, animMage_ );
 
+	//LoadBinFile( "MageRun.bin", mageMesh_, animMage_ );
+
 	g_graphicsSystem.EnableDebugGraphics( true );
 	long long t2_ = std::chrono::system_clock::now().time_since_epoch().count(), t1_;
 	double time_ = 0.0;
