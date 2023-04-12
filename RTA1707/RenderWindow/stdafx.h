@@ -11,3 +11,7 @@
 #include <tchar.h>
 
 #define ZEROSTRUCT(X) ZeroMemory((&(X)),(sizeof((X))))
+
+#include <iostream>
+#include <vector>
+#include <string>
